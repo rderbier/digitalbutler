@@ -1,0 +1,43 @@
+
+    <div class="container"  >
+
+        <!-- HEADER AND TODO COUNT -->
+        <div ng-if="todos.length>0" class=" text-center">
+            <h1><span   class="label label-info">{{ todos.length }}</span>  in your list</h1>
+        </div>
+        <div ng-if="todos.length==0" class=" text-center">
+            <h1>I don't have any todo for you. You may start adding one.</h1>
+        </div>
+
+        <!-- TODO LIST -->
+        <div id="todo-list" class="row">
+            <div class="col-sm-4 col-sm-offset-4">
+
+                <!-- LOOP OVER THE TODOS IN $scope.todos -->
+                <div class="checkbox" ng-repeat="todo in todos">
+                    <label>
+                        <input type="checkbox" ng-click="deleteTodo(todo.id)"> {{ todo.description }}
+                    </label>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- FORM TO CREATE TODOS -->
+        <div id="todo-form" class="row">
+            <div class="col-sm-8 col-sm-offset-2 text-center">
+                <form>
+                    <div class="form-group">
+
+                        <!-- BIND THIS VALUE TO formData.text IN ANGULAR -->
+                        <input type="text" class="form-control  text-center" placeholder="enter new task." ng-model="formData.text">
+                    </div>
+
+                    <!-- createToDo() WILL CREATE NEW TODOS -->
+                    <button type="button" class="btn btn-primary" ng-click="createTodo()">Add</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
