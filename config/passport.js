@@ -1,5 +1,5 @@
 // config/passport.js
-
+var bcrypt   = require('bcrypt-nodejs');
 // load all the things we need
 var LocalStrategy   = require('passport-local').Strategy;
 
@@ -68,11 +68,11 @@ module.exports = function(passport,db) {
                 
 
                 // set the user's local credentials
-                // TODO hash the password with salt
+                var hashPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
 
                 db.save({
             		'email' : email,
-            		'password': password
+            		'password': hashPassword
         		},'USER', function(err,newuser) {
                     if (err)
                         throw err;
@@ -114,7 +114,7 @@ module.exports = function(passport,db) {
             // TODO : change to crypted version
             var user=users[0];
             console.log("Testing user password "+password+" vs "+user.password)
-            if (password!=user.password)
+            if (bcrypt.compareSync(password, user.password)==false) 
                 return done(null, false, req.flash('loginMessage', 'Oops! Wrong password.')); // create the loginMessage and save it to session as flashdata
 
             // all is well, return successful user

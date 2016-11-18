@@ -16,22 +16,8 @@ app.controller('todoController',['$scope', '$http', function todoController($sco
             console.log('Error: ' + data);
         });
     }
-   $scope.templateUrl=function() {
-       return($scope.page)
-   }
-   $scope.sendCommand = function() {
-    $scope.showResult=false;
-        $http.get('/command', {params: { command: $scope.command} }).success(function(data) {
-                $scope.command = ""; // clear the form so our user is ready to enter another
-                $scope.message = data.message;
-                $scope.page=data.page;
-                $scope.showResult=true;
-                console.log(data);
-            })
-            .error(function(data) {
-                console.log('Error: ' + data);
-            });
-    };
+
+   
     // when submitting the add form, send the text to the node API
     $scope.createTodo = function() {
         $http.post('/api/todos', $scope.formData)

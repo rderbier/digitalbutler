@@ -1,4 +1,7 @@
 // app/routes.js
+
+var interpreter=require("./interpreter.js");
+
 module.exports = function(app, db, passport) {
     // api ---------------------------------------------------------------------
      // get user infor
@@ -26,11 +29,11 @@ module.exports = function(app, db, passport) {
          var user = req.user;
          var query = [
          'MATCH (u:USER) WHERE id(u)={userid}',
-		 'MERGE (u)-[r:MAYDO]-(t:TODO {description:{description}, done: false})',
+		 'MERGE (u)-[r:MAYDO]-(t:TODO {createdby:{createdby}, description:{description}, done: false})',
          'RETURN t'
          ].join('\n');
 
-        db.query(query, {userid: user.id, description : req.body.text} , function(err, todo) {
+        db.query(query, {createdby: user.name, userid: user.id, description : req.body.text} , function(err, todo) {
 	        	if (err) {
 	        		res.send(err);
 	        	} else {
@@ -46,35 +49,8 @@ module.exports = function(app, db, passport) {
         var user = req.user;
         var command=req.query.command;
         console.log("command line  "+command);
-        var response ={};
-        response.getit=false;
-             response.page="";
-             response.message="can't do that";
-        if (command.includes("todo")) {
-             response.page="todos";
-             response.message="";
-             response.getit=true;
-             
-        } 
-        if (command.startsWith("have to")) {
-            var description = command.substr(8);
-                     var query = [
-         'MATCH (u:USER) WHERE id(u)={userid}',
-         'MERGE (u)-[r:MAYDO]-(t:TODO {description:{description}, done: false})',
-         'RETURN t'
-         ].join('\n');
 
-          db.query(query, {userid: user.id, description : description} , function(err, todo) {
-                
-
-            });
-
-             response.page="todos";
-             response.message="";
-             response.getit=true;
-             
-        } 
-        res.json(response);
+        interpreter(user,command,db,res);
 
     });
 
@@ -97,32 +73,35 @@ module.exports = function(app, db, passport) {
         });
 
     });
-    // application -------------------------------------------------------------
-    //app.get('*', function(req, res) {
-    //    res.sendfile('./public/index.html'); // load the single view file (angular will handle the page changes on the front-end)
-    //});
+ 
+     // create todo and send back all todos after creation
+    app.get('/api/assets', function(req, res) {
+         var user = req.user;
+               var query = 'MATCH (o:OBJECT)-[r:ISIN]-(l:LOCATION) return o.name AS object, l.name as location';
 
-    // =====================================
-    // HOME PAGE (with login links) ========
-    // =====================================
-    //app.get('/', function(req, res) {
-    //    res.render('index.ejs'); // load the index.ejs file
-    //});
+                db.query(query, {userid: user.id},function(err, result) {
+                    if (err)
+                        res.send(err)
+                    res.json(result);
+                });
+      
+
+    });
 
     // =====================================
     // LOGIN ===============================
     // =====================================
     // show the login form
-    app.get('/login', function(req, res) {
+    //app.get('/login', function(req, res) {
 
         // render the page and pass in any flash data if it exists
-        res.render('login.ejs', { message: req.flash('loginMessage') }); 
-    });
+      //  res.render('login.ejs', { message: req.flash('loginMessage') }); 
+    //});
 
         // process the login form
     app.post('/login', passport.authenticate('local-login', {
         successRedirect : '/', // redirect to the secure profile section
-        failureRedirect : '/login', // redirect back to the signup page if there is an error
+        failureRedirect : '/', // redirect back to the signup page if there is an error
         failureFlash : true // allow flash messages
     }));
 

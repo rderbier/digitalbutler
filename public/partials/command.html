@@ -1,20 +1,20 @@
 
 
 <!-- SET THE CONTROLLER AND GET ALL TODOS -->
-
-    <div class="container page-header">
+<div class="section-colored"> 
+    <div class="container custom-container">
 
  
 
         <!-- FORM  -->
         
-            <div class="col-sm-8 col-sm-offset-2 text-center">
-                <div id="command-form" class="row">
-                <form>
-                    <div class="form-group">
+            <div class="col-sm-12  text-center">
+                
+                <form class="form-inline">
+                    <div class="form-group large-control">
 
                         <!-- BIND THIS VALUE TO fcommand IN ANGULAR -->
-                        <input type="text" class="form-control" name="command" ng-model="command" placeholder="Enter a fact or a question." >
+                        <input type="text" class="form-control " name="command" ng-model="command" placeholder="Enter a fact or a question." >
                         
                     </div>
                     <button type="submit" class="btn btn-primary" ng-click="sendCommand()">Try</button>
@@ -24,11 +24,16 @@
                     
                 
             </div>
+
+            <div class="custom-container col-sm-12" ng-if="message">
+            <div class="alert alert-info" role="alert">
+            <p class="text-info">{{message}}</p>
+            </div>
         </div>
-       
-        
+       </div>
+    </div>    
         
         
 
-    </div>
+
 
