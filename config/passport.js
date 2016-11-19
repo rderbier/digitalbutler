@@ -59,8 +59,25 @@ module.exports = function(passport,db) {
 
             // check to see if theres already a user with that email
             if (users.length>0) {
-            	console.log('Search user in graph - found user ' + users);
-                return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
+                var user=users[0];
+                if (user.password != undefined) {
+            	   console.log('!signup user : found user with password');
+                   return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
+                }  else {
+                    console.log('!signup user : found user without password ' + email);
+                // if there is no user with that email
+                // create the user
+                
+
+                // set the user's local credentials
+                var hashPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
+
+                db.save(user,'password', hashPassword , function(err) {
+                    if (err)
+                        throw err;
+                    return done(null, user);
+                });
+                }
             } else {
                 console.log('Search user in graph - not found' + email);
                 // if there is no user with that email

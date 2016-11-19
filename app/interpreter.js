@@ -29,9 +29,35 @@ module.exports = function (user,command, db, res) {
              
              
         }
+        // CREATE GROUP
+        var match=command.match(/[\w\s]*create group ([\w\s]+)/i);
+        if(match!=null) {
+            var group=match[1].trim();
+            
+                       
+         var query = [
+         'MATCH (u:USER) WHERE id(u)={userid}',
+         'MERGE (u)-[r:MEMBER]-(t:GROUP {createdby:{createdby}, name:{group}})',
+         'RETURN t'
+         ].join('\n');
+             response.page="groups";
+             
+             response.getit=true;
+          db.query(query, {createdby: user.email, userid: user.id, group: group } , function(err, result) {
+          	  if (result.length > 0) {
+                  response.message="OK. you can 'invite' people to join this group";
+              } else {
+              	response.message=" Something went wrong ...";
+              }
+              res.json(response);
+            });
+
+             
+             
+        }
         // WHERE IS
         var whereis=command.match(/[\w\s]*where is ([\w\s]+)/i);
-                if(whereis!=null) {
+        if(whereis!=null) {
             var asset=whereis[1].trim();
             
                        
@@ -54,7 +80,9 @@ module.exports = function (user,command, db, res) {
              
         }
                 // to do list 
-        if (command.includes("todo")) {
+             
+        var match=command.match(/to\s*do([\w\s]*)/i);
+        if (match) {
              response.page="todos";
              response.message="";
              response.getit=true;
