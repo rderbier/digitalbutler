@@ -3,10 +3,10 @@
 
         <!-- HEADER AND TODO COUNT -->
         <div ng-if="todos.length>0" class=" text-left">
-            <h1><span class="badge">{{ todos.length }}</span>  in your list</h1>
+            <h2><span class="badge">{{ todos.length }}</span>  in your list</h2>
         </div>
         <div ng-if="todos.length==0" class=" text-left">
-            <h1>I don't have any todo for you. You may start adding one.</h1>
+            <h2>I don't have any todo for you. You may start adding one.</h2>
         </div>
 
         <!-- TODO LIST -->
@@ -15,7 +15,7 @@
 
                 <!-- LOOP OVER THE TODOS IN $scope.todos -->
                 <div ng-repeat="todo in todos">
-                <button type="button" class="btn btn-primary" ng-click="openTodo(todo)">{{ todo.description }}</button>
+                <h3  class="clickable" ng-click="openTodo(todo)">{{ todo.description }}</h3>
                     
                 </div>
 
@@ -29,7 +29,7 @@
                     <div class="form-group">
 
                         <!-- BIND THIS VALUE TO formData.text IN ANGULAR -->
-                        <input type="text" class="form-control  text-center" placeholder="enter new task." ng-model="formData.text">
+                        <input type="text" class="form-control  text-center" placeholder="enter new task." ng-model="formData.title">
                     </div>
 
                     <!-- createToDo() WILL CREATE NEW TODOS -->

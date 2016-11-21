@@ -1,8 +1,13 @@
 
 // command interpreter
 
-
-module.exports = function (user,command, db, res) {
+	var db = require("seraph")({
+	  server: url.protocol + '//' + url.host,
+	  user: url.auth.split(':')[0],
+	  pass: url.auth.split(':')[1]
+	});
+	
+module.exports = function (user,command, res) {
       var response ={};
         response.getit=false;
              response.page="";
@@ -41,10 +46,11 @@ module.exports = function (user,command, db, res) {
          'RETURN t'
          ].join('\n');
              response.page="groups";
-             
+             response.context="group";
              response.getit=true;
           db.query(query, {createdby: user.email, userid: user.id, group: group } , function(err, result) {
           	  if (result.length > 0) {
+          	  	  response.objectid=result[0].id;
                   response.message="OK. you can 'invite' people to join this group";
               } else {
               	response.message=" Something went wrong ...";
@@ -55,6 +61,15 @@ module.exports = function (user,command, db, res) {
              
              
         }
+        // list of groups
+        var match=command.match(/groups([\w\s]*)/i);
+        if (match) {
+             response.page="groups";
+             response.context="group";
+             response.message="";
+             response.getit=true;
+             res.json(response);
+             }
         // WHERE IS
         var whereis=command.match(/[\w\s]*where is ([\w\s]+)/i);
         if(whereis!=null) {
@@ -80,7 +95,6 @@ module.exports = function (user,command, db, res) {
              
         }
                 // to do list 
-             
         var match=command.match(/to\s*do([\w\s]*)/i);
         if (match) {
              response.page="todos";

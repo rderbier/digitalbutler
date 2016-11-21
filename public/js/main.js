@@ -20,6 +20,7 @@ app.config(['$routeProvider', function ($routeProvider) {
     // Pages
     .when("/todos", {templateUrl: "partials/todo.html", controller: "todoController"})
     .when("/location", {templateUrl: "partials/asset.html", controller: "assetController"})
+    .when("/groups", {templateUrl: "partials/groups.html", controller: "groupsController"})
     .when("/help", {templateUrl: "partials/help.html", controller: "PageCtrl"})
     .when("/pricing", {templateUrl: "partials/pricing.html", controller: "PageCtrl"})
     .when("/services", {templateUrl: "partials/services.html", controller: "PageCtrl"})
@@ -44,6 +45,7 @@ app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
         })
         .error(function(data) {
             $scope.userinfo={login: false}
+            $location.path("/");
             console.log('Error: ' + data);
         });
 
@@ -57,6 +59,7 @@ app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
 
                 $scope.command = ""; // clear the form so our user is ready to enter another
                 $scope.message = data.message;
+                $scope.context = data.context;
                 $scope.page=data.page;
                 if (data.getit==true) {
                   $location.path(data.page);

@@ -20,7 +20,10 @@ app.controller('todoController',['$scope', '$http', function todoController($sco
    
     // when submitting the add form, send the text to the node API
     $scope.createTodo = function() {
-        $http.post('/api/todos', $scope.formData)
+        var task= $scope.formData;
+
+         
+        $http.post('/api/todos', task)
             .success(function(data) {
                 $scope.formData = {}; // clear the form so our user is ready to enter another
                 $scope.todos = data;

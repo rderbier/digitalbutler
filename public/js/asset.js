@@ -1,7 +1,7 @@
 // todo.js
 var app = angular.module('digitalbutler');
 
-app.controller('assetController',['$scope', '$http', function todoController($scope, $http) {
+app.controller('assetController',['$scope', '$http', function assetController($scope, $http) {
     $scope.formData = {};
     $scope.showResult=false;
 

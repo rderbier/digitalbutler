@@ -9,6 +9,19 @@ For more info and more free Bootstrap 3 HTML themes, visit http://startbootstrap
 
 
 */
+.clickable:hover {
+    background-color: #54a7b0;
+
+}
+.command-panel {
+    background-color: #e39929;
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
+.command-panel .context-info {
+    color:  #f0fbff;
+}
 .form-group.large-control {
     width: 90%;
 }
@@ -153,8 +166,8 @@ footer {
 @media only screen and (min-width: 20em) {
     .logo a:before {
     display: block;
-    top: -.5em;
-    left: -1.3em;
+    top: -.2em;
+    left: -1em;
     position: absolute;
     width: 2.35em;
     height: 2.35em;
@@ -162,6 +175,9 @@ footer {
     background: url(/static/butler.png) no-repeat;
     background-size: 100%;
   }
+  .logo img {
+    margin-left: 2.6em;
+}
 }
 @media only screen and (min-width: 60em) {
 .logo a:before {

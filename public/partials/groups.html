@@ -1,0 +1,37 @@
+
+    <div class="container"  >
+
+        <!-- HEADER AND TODO COUNT -->
+        <div ng-if="assets.length>0" class=" text-left">
+            <h1>Your are : </h1>
+        </div>
+        <div ng-if="assets.length==0" class=" text-left">
+            <h1>I don't have any group. You may start create one.</h1>
+        </div>
+
+        <!-- TODO LIST -->
+        <div id="group-list" class="row">
+            <div >
+
+                <!-- LOOP OVER THE TODOS IN $scope.todos -->
+                <div ng-repeat="group in grouplist">
+                <h3 class="clickable" ng-click="getGroupDetails(group.id)">{{group.role}} of group {{group.name}} <span ng-if="group.createdby != userinfo.email">(created by {{group.createdby}})</span></h3>
+                <div ng-if="currentgroup==group.id">
+                     <div ng-repeat="member in groupdetailslist[group.id]">
+{{member.role}} {{member.email}}
+                     </div>
+                </div>
+                    
+                </div>
+                
+                
+
+                
+
+            </div>
+        </div>
+
+
+
+    </div>
+

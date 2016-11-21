@@ -1,18 +1,19 @@
 
 
 <!-- SET THE CONTROLLER AND GET ALL TODOS -->
-<div class="section-colored"> 
+<div class="command-panel"> 
     <div class="container custom-container">
 
  
 
         <!-- FORM  -->
         
-            <div class="col-sm-12  text-center">
+            <div class="col-sm-12 ">
                 
                 <form class="form-inline">
+                    <p class="context-info">{{context}}</p>
                     <div class="form-group large-control">
-
+                        
                         <!-- BIND THIS VALUE TO fcommand IN ANGULAR -->
                         <input type="text" class="form-control " name="command" ng-model="command" placeholder="Enter a fact or a question." >
                         

@@ -1,8 +1,9 @@
 // app/routes.js
 
 var interpreter=require("./interpreter.js");
-
-module.exports = function(app, db, passport) {
+var authController=require('../controllers/auth');
+var dataController=require('../controllers/datacontroller');
+module.exports = function(app,  passport) {
     // api ---------------------------------------------------------------------
      // get user infor
     app.get('/api/userinfo', function(req, res) {
@@ -14,79 +15,31 @@ module.exports = function(app, db, passport) {
          userinfo.name=user.name;
         } 
         res.json(userinfo);
-    });
-    // get all todos
-    app.get('/api/todos', function(req, res) {
-         var user = req.user;
-        // use seraphto get all todos in the database
-        sendTodos(db,user,res);
-    });
-
-
-
-    // create todo and send back all todos after creation
-    app.post('/api/todos', function(req, res) {
-         var user = req.user;
-         var query = [
-         'MATCH (u:USER) WHERE id(u)={userid}',
-		 'MERGE (u)-[r:MAYDO]-(t:TODO {createdby:{createdby}, description:{description}, done: false})',
-         'RETURN t'
-         ].join('\n');
-
-        db.query(query, {createdby: user.name, userid: user.id, description : req.body.text} , function(err, todo) {
-	        	if (err) {
-	        		res.send(err);
-	        	} else {
-                    sendTodos(db,user,res);
-                }
-
-	        });
-      
-
-    });
-        // delete a todo
-    app.get('/command', function(req, res) {
+    });    
+// command
+    app.get('/command', isApiAuthenticated,function(req, res) {
         var user = req.user;
         var command=req.query.command;
         console.log("command line  "+command);
 
-        interpreter(user,command,db,res);
+        interpreter(user,command,res);
 
     });
-
-    // delete a todo
-    app.delete('/api/todos/:todo_id', function(req, res) {
-    	var user = req.user;
-    	console.log("deleting node "+req.params.todo_id);
-    	var force=true; // delete relations if not orphan
-    	db.delete(req.params.todo_id, force,
-    		function(err) {
-
-    			if (err) {
-    				console.log("node NOT deleted "+err);
-    				res.send(err);
-
-    			} else {
-    			   console.log("node deleted ");
-                   sendTodos(db,user,res);
-                }
-        });
-
-    });
+    // get all todos
+    app.route('/api/todos')
+      .get(isApiAuthenticated, dataController.getTodos)
+      .post(isApiAuthenticated,dataController.createTodo);
+     app.route('/api/todos/:todo_id') 
+      .delete(isApiAuthenticated, dataController.deleteTodo);
  
-     // create todo and send back all todos after creation
-    app.get('/api/assets', function(req, res) {
-         var user = req.user;
-               var query = 'MATCH (o:OBJECT)-[r:ISIN]-(l:LOCATION) return o.name AS object, l.name as location';
+     // API assets
+     //
+    app.get('/api/assets', isApiAuthenticated,dataController.getAssets);
 
-                db.query(query, {userid: user.id},function(err, result) {
-                    if (err)
-                        res.send(err)
-                    res.json(result);
-                });
-      
-
-    });
+    // API groups
+    app.get('/api/groups', isApiAuthenticated,dataController.getGroups);
+    app.route('/api/group/:group_id')
+      .get(isApiAuthenticated,dataController.getGroup);
 
     // =====================================
     // LOGIN ===============================
@@ -144,23 +97,23 @@ module.exports = function(app, db, passport) {
 };
 
 
-function sendTodos(db, user, res) {
-		            // get and return all the todos after you create another
-		       var query = 'MATCH (u:USER)-[]-(t:TODO) WHERE id(u)={userid} RETURN t';
 
-	            db.query(query, {userid: user.id},function(err, todos) {
-	            	if (err)
-	            		res.send(err)
-	            	res.json(todos);
-	            });
-}
 // route middleware to make sure a user is logged in
+
+function isApiAuthenticated(req, res, next) {
+    console.log("Testing isLoggedIn "+req.isAuthenticated());
+    // if user is authenticated in the session, carry on 
+    if (req.isAuthenticated())
+        return next();
+    return (authController.isAuthenticated(req,res,next));
+  
+}
 function isLoggedIn(req, res, next) {
 	console.log("Testing isLoggedIn "+req.isAuthenticated());
     // if user is authenticated in the session, carry on 
     if (req.isAuthenticated())
     	return next();
-
+    
     // if they aren't redirect them to the home page
     res.redirect('/');
 }
