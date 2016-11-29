@@ -9,12 +9,10 @@ module.exports = function(app,  passport) {
     app.get('/api/userinfo', function(req, res) {
         var userinfo={login: false};
         if (req.isAuthenticated()) {
-         var user = req.user;
-         userinfo.login=true;
-         userinfo.email=user.email;
-         userinfo.name=user.name;
-        } 
+         dataController.getUserInfo(req,res);
+        } else {
         res.json(userinfo);
+    }
     });    
 // command
     app.get('/command', isApiAuthenticated,function(req, res) {
@@ -29,9 +27,12 @@ module.exports = function(app,  passport) {
     app.route('/api/todos')
       .get(isApiAuthenticated, dataController.getTodos)
       .post(isApiAuthenticated,dataController.createTodo);
-     app.route('/api/todos/:todo_id') 
-      .delete(isApiAuthenticated, dataController.deleteTodo);
- 
+
+     app.route('/api/todo/:todo_id') 
+      .delete(isApiAuthenticated, dataController.deleteTodo)
+      .put(isApiAuthenticated,dataController.updateTodo);
+    app.route('/api/allocatetome/:todo_id') 
+      .put(isApiAuthenticated,dataController.allocateTaskToUser);
      // API assets
      //
     app.get('/api/assets', isApiAuthenticated,dataController.getAssets);

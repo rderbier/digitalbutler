@@ -7,7 +7,7 @@
  * Main AngularJS Web Application
  */
 var app = angular.module('digitalbutler', [
-  'ngRoute'
+  'ngRoute','schemaForm'
 ]);
 
 /**
@@ -40,6 +40,7 @@ app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
       // when landing on the page, get all todos and show them
     $http.get('/api/userinfo')
         .success(function(data) {
+
             $scope.userinfo = data;
             
         })

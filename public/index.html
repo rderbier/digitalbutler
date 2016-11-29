@@ -25,7 +25,8 @@
     <!-- Our Website CSS Styles -->
     <link rel="stylesheet" href="css/main.css">
 
-
+<link rel="stylesheet" href="/js/pickadate/lib/themes/classic.css">
+<link rel="stylesheet" href="/js/pickadate/lib/themes/classic.date.css">
 </head>
 <body ng-app="digitalbutler" ng-controller="mainCtrl">
 <!--[if lt IE 7]>
@@ -41,13 +42,25 @@
 <div ng-include='"templates/footer.html"'></div>
 
 <!-- Vendor: Javascripts -->
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="/js/jquery/jquery.min.js"></script>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 <!-- Vendor: Angular, followed by our custom Javascripts -->
-<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.18/angular.min.js"></script>
+<script src="/js/angular/angular.min.js"></script>
+<script src="/js/angular-sanitize/angular-sanitize.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.18/angular-route.min.js"></script>
+<!- json form libraries -->
 
+<script src="/js/tv4/tv4.js"></script>
+
+<script src="/js/objectpath/lib/objectpath.js"></script>
+<script src="/js/angular-schema-form/dist/schema-form.js"></script>
+<script src="/js/angular-schema-form-bootstrap/bootstrap-decorator.js"></script>
+
+<script src="/js/pickadate/lib/picker.js"></script>
+<script src="/js/pickadate/lib/picker.date.js"></script>
+
+<script src="/js/angular-schema-form-datepicker/bootstrap-datepicker.min.js"></script>
 <!-- Our Website Javascripts -->
 <script src="js/main.js"></script>
 <script src="js/todo.js"></script>

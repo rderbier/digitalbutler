@@ -1,42 +1,80 @@
 
     <div class="container"  >
+        <!-- HEADER FOR ACTIONS -->
+        <div ng-if="todos.actions.length>0" class=" text-left">
+            <h2><span class="badge">{{ todos.actions.length }}</span>  tasks you can start</h2>
+            <div ng-repeat="todo in todos.actions">
+                <h3  data-toggle="collapse" data-target="#collapseExample" ng-class="{taskdone: todo.done}" ng-click="showTaskDetails(todo)" ><span class="clickable" title="{{todo.description}}" >{{ todo.title }} </span></h3>
+                <div ng-if="todo.id==currentTask.id" class="collapse" id="collapseExample">
+                    <div class="well">
+                        <form name="taskFormAction" sf-schema="taskSchema" sf-form="taskActionDetailsForm" sf-model="currentTask" ng-submit="startAction(currentTask,taskForm)"></form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
 
         <!-- HEADER AND TODO COUNT -->
-        <div ng-if="todos.length>0" class=" text-left">
-            <h2><span class="badge">{{ todos.length }}</span>  in your list</h2>
+        <div ng-if="todos.me.length>0" class=" text-left">
+            <h2><span class="badge">{{ todos.me.length }}</span>  in your list</h2>
+                            <!-- LOOP OVER THE TODOS IN $scope.todos -->
+                <div ng-repeat="todo in todos.me">
+                <h3  data-toggle="collapse" data-target="#collapseExample" ng-class="{taskdone: todo.done}" ng-click="showTaskDetails(todo)" ><span class="clickable" title="{{todo.description}}" >{{ todo.title }} <span ng-if="todo.duedatestr!=undefined">( {{todo.duedatestr}} )</span> </span></h3>
+                 <div ng-if="todo.id==currentTask.id" class="collapse" id="collapseExample">
+                 <div class="well">
+                    <span ng-if="todo.distribution=='GROUP'">{{todo.explanation}}</span>
+                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskSelfDetailsForm" sf-model="currentTask" ng-submit="setTaskDone(currentTask,taskForm)"></form>
+
+                </div>
+                </div>
+                </div>
         </div>
-        <div ng-if="todos.length==0" class=" text-left">
-            <h2>I don't have any todo for you. You may start adding one.</h2>
+        <div ng-if="todos.me.length==0" class=" text-left">
+            <h2>I don't have any todo for you</h2>
         </div>
 
         <!-- TODO LIST -->
-        <div id="todo-list" class="row">
+
+
+
+            
+
+                <!-- HEADER AND TODO COUNT -->
+        <div ng-if="todos.group.length>0" class=" text-left">
+            <h2><span class="badge">{{ todos.group.length }}</span>  you can work on</h2>
+                    <!-- TODO LIST -->
+
             <div >
 
                 <!-- LOOP OVER THE TODOS IN $scope.todos -->
-                <div ng-repeat="todo in todos">
-                <h3  class="clickable" ng-click="openTodo(todo)">{{ todo.description }}</h3>
-                    
+                <div ng-repeat="todo in todos.group">
+                <h3  data-toggle="collapse" data-target="#collapseExample" ng-class="{taskdone: todo.done}" ng-click="showTaskDetails(todo)" ><span class="clickable" title="{{todo.description}}">{{ todo.title }} </span></h3>
+                 <div ng-if="todo.id==currentTask.id" class="collapse" id="collapseExample">
+                 <div class="well">
+                      {{todo.explanation}}
+                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskGroupDetailsForm" sf-model="currentTask" ng-submit="updateTodo(currentTask,taskForm)"></form>
+
+                </div>
+                </div>
                 </div>
 
+
             </div>
         </div>
-
-        <!-- FORM TO CREATE TODOS -->
-        <div id="todo-form" class="row">
-            <div >
-                <form>
-                    <div class="form-group">
-
-                        <!-- BIND THIS VALUE TO formData.text IN ANGULAR -->
-                        <input type="text" class="form-control  text-center" placeholder="enter new task." ng-model="formData.title">
-                    </div>
-
-                    <!-- createToDo() WILL CREATE NEW TODOS -->
-                    <button type="submit" class="btn btn-primary" ng-click="createTodo()">Add</button>
-                </form>
-            </div>
+        <div ng-if="todos.group.length==0" class=" text-left">
+            <h2>I don't have any todo for you in your groups </h2>
         </div>
+
+
+
+        <button ng-if="!newformvisible" data-toggle="collapse" data-target="#newTaskForm" type="button" class="btn" ng-click="showFormNewTask()">+</button>
+        <div  id="newTaskForm" class="collapse well" >
+<form name="taskFormNew" sf-schema="taskSchema" sf-form="newTaskForm" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
+{{newTask.target}}
+</div>
+
+
 
     </div>
 

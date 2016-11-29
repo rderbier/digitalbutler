@@ -6,15 +6,26 @@ All Start Bootstrap themes are licensed under Apache 2.0.
 For more info and more free Bootstrap 3 HTML themes, visit http://startbootstrap.com!
 
 
-
+.taskdone:after {
+    content: "done";
+}
 
 */
+.h2, h2 {
+    font-size: 24px;
+}
+.h3, h3 {
+    font-size: 16px;
+}
+.taskdone {
+    text-decoration: line-through;
+}
 .clickable:hover {
     background-color: #54a7b0;
 
 }
 .command-panel {
-    background-color: #e39929;
+    background-color: #377077;
     padding-top: 30px;
     padding-bottom: 30px;
 }
@@ -64,7 +75,8 @@ body {
 }
 
 .section-colored {
-    background-color: #E39929;
+    background-color: #377077;
+    color: #F0FBFF;
     /* change this to change the background color of a colored section */
 }
 

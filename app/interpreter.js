@@ -6,7 +6,7 @@
 	  user: url.auth.split(':')[0],
 	  pass: url.auth.split(':')[1]
 	});
-	
+
 module.exports = function (user,command, res) {
       var response ={};
         response.getit=false;
@@ -104,16 +104,16 @@ module.exports = function (user,command, res) {
              }
 // HAVE TO use case
         if (command.startsWith("have to")) {
-            var description = command.substr(8);
+            var title = command.substr(8);
                      var query = [
          'MATCH (u:USER) WHERE id(u)={userid}',
-         'MERGE (u)-[r:MAYDO]-(t:TODO {createdby:{createdby}, description:{description}, done: false})',
+         'MERGE (u)-[r:MAYDO]-(t:TODO {createdby:{createdby}, title:{title}, done: false})',
          'RETURN t'
          ].join('\n');
              response.page="todos";
              response.message="";
              response.getit=true;
-          db.query(query, {createdby: user.email, userid: user.id, description : description} , function(err, todo) {
+          db.query(query, {createdby: user.email, userid: user.id, title : title} , function(err, todo) {
 
              res.json(response);
             });
