@@ -7,7 +7,7 @@
  * Main AngularJS Web Application
  */
 var app = angular.module('digitalbutler', [
-  'ngRoute','schemaForm'
+  'ngRoute','schemaForm', 'ui.bootstrap'
 ]);
 
 /**
@@ -36,7 +36,7 @@ app.config(['$routeProvider', function ($routeProvider) {
  * homecontrol
  */
 app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
-  
+    console.log("mainCtrl started");
       // when landing on the page, get all todos and show them
     $http.get('/api/userinfo')
         .success(function(data) {
@@ -51,6 +51,10 @@ app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
         });
 
   $scope.command="";
+  $scope.alert=undefined;
+  $scope.closeAlert = function () {
+    $scope.alert=undefined;
+  }
 
   $scope.sendCommand = function() {
     // !!! use this instead of $Scope as with are using nested controllers 
@@ -59,7 +63,7 @@ app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
         $http.get('/command', {params: { command: this.command} }).success(function(data) {
 
                 $scope.command = ""; // clear the form so our user is ready to enter another
-                $scope.message = data.message;
+                $scope.alert = {msg: data.message};
                 $scope.context = data.context;
                 $scope.page=data.page;
                 if (data.getit==true) {

@@ -7,8 +7,7 @@
  
 
         <!-- FORM  -->
-        
-            <div class="col-sm-12 ">
+   
                 
                 <form class="form-inline">
                     <p class="context-info">{{context}}</p>
@@ -21,18 +20,13 @@
                     <button type="submit" class="btn btn-primary" ng-click="sendCommand()">Try</button>
 
                   </form> 
-                    
-                    
-                
-            </div>
 
-            <div class="custom-container col-sm-12" ng-if="message">
-            <div class="alert alert-info fade in" role="alert">
-            <p class="text-info">{{message}}</p>
-            </div>
+            <div uib-alert  ng-class="alert-warning" close="closeAlert()">{{alert.msg}}</div>
+
+            
         </div>
        </div>
-    </div>    
+      
         
         
 

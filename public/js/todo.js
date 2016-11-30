@@ -2,6 +2,7 @@
 var app = angular.module('digitalbutler');
 
 app.controller('todoController',['$scope', '$http', function todoController($scope, $http) {
+    $scope.newformvisible = false; 
     $scope.newTask = {
       occurrence: "NOW"
     };
@@ -29,7 +30,7 @@ app.controller('todoController',['$scope', '$http', function todoController($sco
                             },
               "repetitionWeek": {"type": "string"},
               "repetitionMonth": {"type": "integer", "minimum": 1,"maximum": 31},
-              "duedate": {"type": "string","format": "date"},
+              "duedate": {"type": "string"},
               "duedatestr" : {"type": "string"},
               "done": {
                   "name": "done",
@@ -93,7 +94,7 @@ var taskForm = [
       "title": "Who should do this task ?",
       "condition": "newTask.title!=undefined",
       "key": "distribution",
-      "type": "radios-inline",
+      "type": "radios",
       "titleMap": [
           {"value": "PERSO", "name": "Myself"},
           {"value": "GROUP", "name": "Somebody from one on my groups"}
@@ -221,7 +222,7 @@ var taskForm = [
       "key": "repetitionWeek",
       "title":"which day of the week ?",
       "condition": "newTask.occurrence=='EVERYWEEK'",
-      "type": "radios-inline",
+      "type": "select",
       "titleMap": [
           {"value": "1", "name": "Monday"},
           {"value": "2", "name": "Tuesday"},
@@ -248,7 +249,7 @@ var actions=
   type: "actions",
   items: [
     { type: "submit", title: "Save", style: "btn-info" ,icon: "glyphicon glyphicon-icon-exclamation-sign"},
-    { type: "button", title: "Cancel", style: "btn-info", onClick:function () {$('#newTaskForm').collapse("hide"); $scope.newformvisible=false;}}
+    { type: "button", title: "Cancel", style: "btn-info", onClick:function () { $scope.newformvisible=false;}}
   ]
 }
 $scope.newTaskForm.push(actions);
