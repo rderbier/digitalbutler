@@ -51,6 +51,9 @@ app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
         });
 
   $scope.command="";
+  $scope.isNavCollapsed=true;
+  $scope.isNav2Collapsed=true;
+  
   $scope.alert=undefined;
   $scope.closeAlert = function () {
     $scope.alert=undefined;

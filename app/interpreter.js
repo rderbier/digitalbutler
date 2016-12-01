@@ -7,7 +7,9 @@
 	  pass: url.auth.split(':')[1]
 	});
 
-module.exports = function (user,command, res) {
+var dataController=require('../controllers/datacontroller');
+
+module.exports = function (user,command, req,res) {
       var response ={};
         response.getit=false;
              response.page="";
@@ -105,22 +107,28 @@ module.exports = function (user,command, res) {
 // HAVE TO use case
         if (command.startsWith("have to")) {
             var title = command.substr(8);
-                     var query = [
-         'MATCH (u:USER) WHERE id(u)={userid}',
-         'MERGE (u)-[r:MAYDO]-(t:TODO {createdby:{createdby}, title:{title}, done: false})',
-         'RETURN t'
-         ].join('\n');
-             response.page="todos";
-             response.message="";
-             response.getit=true;
-          db.query(query, {createdby: user.email, userid: user.id, title : title} , function(err, todo) {
+            var task={}
+            task.distribution="PERSO";
+            task.title=title;
+            task.occurrence="NOW";
+            
+            response.getit=true;
 
-             res.json(response);
-            });
-
-             
-             
-        } 
+            dataController.createTask(user,task, function(err, todo) {
+              if (err) {
+                  console.log("Error : "+err.message);
+                  response.message=err.message;
+                  
+              } else {
+                response.page="todos";
+                response.message="";
+                
+                
+              } 
+            
+              res.send(response);    
+            }); 
+          }
         if (response.getit==false) 
         	res.json(response);
 }

@@ -92,8 +92,8 @@ exports.verifyUser = function (username,password,callback) {
 
 
 
-getTodos = function (req,res) {
-	var user = req.user;
+getTodos = function (user,res) {
+	
 	// get and return all the todos after you create another
 	var tasklist={};
 	var query = 'MATCH (u:USER)-[:HASTO]-(t:TODO) WHERE id(u)={userid} RETURN t  ORDER BY t.duedate ASC LIMIT 100 ';
@@ -117,12 +117,23 @@ getTodos = function (req,res) {
 	    });
 	});
 }
-exports.getTodos = getTodos;
+exports.getTasks = function(req, res) {
+    getTodos(req.user,res);
+}
 
 exports.createTodo = function(req, res) {
+	createTask(user,req.body, function(err, todo) {
+			if (err) {
+				console.log("Error : "+err.message);
+				res.send(err);
+			} else {
+				getTodos(user,res);
+			} })
+}
 
-	var user = req.user;
-	var task=req.body;
+exports.createTask = function(user, task, done) {
+	
+	
 	if (task.distribution=="PERSO") {
           task.execUser=user.email;
         }
@@ -156,7 +167,7 @@ exports.createTodo = function(req, res) {
 		set.push(' t.duedate='+task.duedate);
 	if (task.occurence == 'CHAINED') {
 		console.log("Chained task not implemented yet");
-		getTodos(req,res);
+		getTodos(user,res);
 	} else {
 		var relation="HASTO";
 		var groupid = task.execGroupId; // using notion of doing a task
@@ -188,16 +199,8 @@ exports.createTodo = function(req, res) {
 		}
 		
 		console.log("receive task : "+task.title);
-console.log("query: "+query);
-		db.query(query, function(err, todo) {
-			if (err) {
-				console.log("Error : "+err.message);
-				res.send(err);
-			} else {
-				getTodos(req,res);
-			}
-
-		});
+        console.log("query: "+query);
+		db.query(query, done);
     }
 
 }
@@ -217,7 +220,7 @@ exports.allocateTaskToUser = function(req, res) {
 			console.log("query  : "+query);
 		} else {
 			// MATCH (g:GROUP) , (t:TODO)<-[r]-(u) WHERE id(t)=93 AND id(g)=77 DELETE r WITH t,u,g MERGE (t)<-[r:HASTO]-(g)
-			getTodos(req,res);
+			getTodos(user,res);
 		}
 
 	});
@@ -256,7 +259,7 @@ exports.updateTodo = function(req, res) {
 			res.send(err);
 		} else {
 			// MATCH (g:GROUP) , (t:TODO)<-[r]-(u) WHERE id(t)=93 AND id(g)=77 DELETE r WITH t,u,g MERGE (t)<-[r:HASTO]-(g)
-			getTodos(req,res);
+			getTodos(user,res);
 		}
 
 	});
@@ -267,8 +270,9 @@ exports.updateTodo = function(req, res) {
 exports.deleteTodo = function(req, res) {
 	var user = req.user;
 	console.log("deleting node "+req.params.todo_id);
-    var force=true; // delete relations if not orphan
-    db.delete(req.params.todo_id, force,
+    
+    var query = 'MATCH ()-[r]-(t:TODO) WHERE id(t)='+req.params.todo_id+' delete r,t';
+    db.query(query, 
     	function(err) {
 
     		if (err) {
@@ -277,7 +281,7 @@ exports.deleteTodo = function(req, res) {
 
     		} else {
     			console.log("node deleted ");
-    			getTodos(req,res);
+    			getTodos(user,res);
     		}
     	});
 

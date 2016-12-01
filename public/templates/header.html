@@ -1,21 +1,26 @@
-<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+
+
+<!-- Menu when not loged in = login form -->
+<nav ng-if="userinfo.login==false" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
     <div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
+        <button type="button" class="navbar-toggle btn-primary" ng-click="isNavCollapsed = !isNavCollapsed">
+                <span class="glyphicon glyphicon-log-in"></span> Login
+                
             </button>
-            <!-- You'll want to use a responsive image option so this logo looks good on devices - I recommend using something like retina.js (do a quick Google search for it and you'll find it) -->
-            <h1 class="logo">
-            <a  href="#/">
-                <img src="/static/butler-logo.png" alt="Digital Butler Service"></a>
+    
             
-            </h1>
+            <!-- You'll want to use a responsive image option so this logo looks good on devices - I recommend using something like retina.js (do a quick Google search for it and you'll find it) -->
+            <h2 class="logo">
+            <a  class="navbar-brand" href="#/" >
+                <img src="/static/butler-logo.png" alt="Digital Butler Service"></a>
+             </h2>
+            
+            
         </div>
 
-        <div ng-if="userinfo.login==false" id="navbar" class="navbar-collapse collapse">
+
+        <div  class="navbar-collapse collapse" uib-collapse="isNavCollapsed">
         <!-- <ul class="nav navbar-nav navbar-right">
                 <li><a href="#/services">Services</a>
                 </li>
@@ -36,24 +41,49 @@
             <button type="submit" class="btn btn-primary">Sign in</button>
           </form>
         </div>
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <div ng-if="userinfo.login==true"  id="navbar" class="collapse navbar-collapse navbar-ex1-collapse">
+
+        
+    </div>
+    <!-- /.container -->
+</nav>
+<nav ng-if="userinfo.login==true" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+        
+            <button type="button" class="navbar-toggle" ng-click="isNav2Collapsed = !isNav2Collapsed">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            
+            <!-- You'll want to use a responsive image option so this logo looks good on devices - I recommend using something like retina.js (do a quick Google search for it and you'll find it) -->
+            <h2 class="logo">
+            <a  class="navbar-brand" href="#/" >
+                <img src="/static/butler-logo.png" alt="Digital Butler Service"></a>
+             </h2>
+            
+            
+        </div>
+
+
+        <div class="navbar-collapse collapse" uib-collapse="isNav2Collapsed">
+       <!-- Collect the nav links, forms, and other content for toggling -->
+        
             <ul class="nav navbar-nav navbar-right">
               <!--
                 <li><a href="#/contact">Notifications</a>
                 </li>
+
                -->
-                <li class="dropdown">
-                    <a class="dropdown-toggle" data-toggle="dropdown">{{userinfo.email}}<b class="caret"></b></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="/logout" ">Logout</a>
-                        </li>
-                        
-                    </ul>
-                </li>
+                <li><a href="/logout" ">Logout</a>
+                
             </ul>
         </div>
+  
+
         <!-- /.navbar-collapse -->
     </div>
     <!-- /.container -->
 </nav>
+        

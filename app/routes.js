@@ -20,12 +20,12 @@ module.exports = function(app,  passport) {
         var command=req.query.command;
         console.log("command line  "+command);
 
-        interpreter(user,command,res);
+        interpreter(user,command,req,res);
 
     });
     // get all todos
     app.route('/api/todos')
-      .get(isApiAuthenticated, dataController.getTodos)
+      .get(isApiAuthenticated, dataController.getTasks)
       .post(isApiAuthenticated,dataController.createTodo);
 
      app.route('/api/todo/:todo_id') 

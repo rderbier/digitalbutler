@@ -66,8 +66,16 @@ $scope.taskSelfDetailsForm =  [
     "comment",
     {
       type: "actions",
+      condition: "todo.done!=true",
       items: [
-      { type: "button", title: "Done", onClick: function () {$scope.setTaskDone($scope.currentTask)}}
+      { type: "submit", title: "Done" }
+      ]
+    },
+    {
+      type: "actions",
+      condition: "todo.done==true",
+      items: [
+      { type: "submit",  title: "Hide this task"}
       ]
     }
     ];
@@ -76,8 +84,7 @@ $scope.taskGroupDetailsForm =  [
     {
       type: "actions",
       items: [
-      { type: "button", title: "Will do it", onClick: function () {$scope.allocateTaskToMe($scope.currentTask)}},
-      { type: "button", title: "Done", onClick: function () {$scope.setTaskDone($scope.currentTask)}}
+      { type: "submit", title: "Will do it"}
       ]
     }
     ];
@@ -302,8 +309,12 @@ $scope.showFormNewTask = function(task) {
 };
 // when submitting the add form, send the text to the node API
 $scope.setTaskDone = function(task,form) {
-      task.done=true;
-      $scope.updateTask(task,form);
+      if (task.done==true) {
+        $scope.deleteTodo(task);
+      } else {
+        task.done=true;
+        $scope.updateTask(task,form);
+      }
   }
 $scope.allocateTaskToMe = function(task,form) {
 
@@ -349,9 +360,10 @@ $scope.updateTask = function(task,form) {
     };
 
     // delete a todo after checking it
-    $scope.deleteTodo = function(id) {
-    	console.log("deleting node "+id);
-        $http.delete('/api/todos/' + id)
+    $scope.deleteTodo = function(task) {
+
+    	console.log("deleting node "+task.id);
+        $http.delete('/api/todo/' + task.id)
         .success(function(data) {
             $scope.todos = data;
             console.log(data);
