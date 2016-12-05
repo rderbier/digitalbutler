@@ -1,12 +1,12 @@
 // todo.js
 var app = angular.module('digitalbutler');
 
-app.controller('todoController',['$scope', '$http', function todoController($scope, $http) {
-    $scope.newformvisible = false; 
+app.controller('newtaskController',['$scope', '$http', function newtaskController($scope, $http) {
+    $scope.newformvisible = true; 
     $scope.newTask = {
       occurrence: "NOW"
     };
-    $scope.showResult=false;
+
     $scope.taskSchema = {
           "type": "object",
           "title": "TODO",
@@ -44,47 +44,7 @@ app.controller('todoController',['$scope', '$http', function todoController($sco
 
 
 
-$scope.taskActionDetailsForm =  [
-    {"key": "description",readonly: true},
-    {
-      "key": "instance",
-      "title": "Enter a title for this instance of task",
-      "type": "text"     
-    },
-    {
-      type: "actions",
-      items: [
-      { type: "submit", title: "Create an instance of this task"}
-      ]
-    }
-    ];
-$scope.taskSelfDetailsForm =  [
-    {"key": "description",readonly: true},
-    "instance",
-    {
-      type: "actions",
-      condition: "todo.done!=true",
-      items: [
-      { type: "submit", title: "Done" }
-      ]
-    },
-    {
-      type: "actions",
-      condition: "todo.done==true",
-      items: [
-      { type: "submit",  title: "Hide this task"}
-      ]
-    }
-    ];
-$scope.taskGroupDetailsForm =  [
-    {"key": "description",readonly: true},
-    {
-      type: "actions",
-      items: [
-      { type: "submit", title: "Will do it"}
-      ]
-    }
-    ];
+
 
 
 $scope.taskExplanation = function (task) {
@@ -93,73 +53,9 @@ $scope.taskExplanation = function (task) {
   return str;
   } 
 
-    // when landing on the page, get all todos and show them
-$scope.getTodos = function() {
-        $http.get('/api/todos')
-        .success(function(data) {
-          //$scope.todos.clear();
-          for (var t in data.me) {
-               var task = data.me[t];
-               var str=$scope.taskExplanation(task);
-               task.explanation=str;
-               if (task.duedate) {
-                  var d=new Date(task.duedate);
-                  task.duedatestr=d.toUTCString().substr(0,11);
-               }
-            }
-          for (var t in data.group) {
-               var task = data.group[t];
-               var str=$scope.taskExplanation(task);
-               task.explanation=str;
-               if (task.duedate) {
-                  var d=new Date(task.duedate);
-                  task.duedatestr=d.toUTCString().substr(0,11);
-               }
-            }
-            $scope.todos = data;
-            console.log(data);
-        })
-        .error(function(data) {
-            console.log('Error: ' + data);
-        });
-    }
 
-  // when submitting the add form, send the text to the node API
-$scope.showMyTaskDetails = function(task) {
-    $scope.currentMyTask = task;  
-    $scope.newformvisible = false; 
-    $scope.mytaskOpened=false;  
-};
-  $scope.showGroupTaskDetails = function(task) {
-    $scope.currentGroupTask = task;  
-    $scope.newformvisible = false; 
-    $scope.mytaskOpened=false;  
-};
-$scope.showFormNewTask = function(task) {
-    $scope.newformvisible = true; 
-    $scope.currentTask = null;    
-};
-// when submitting the add form, send the text to the node API
-$scope.setTaskDone = function(task,form) {
-      if (task.done==true) {
-        deleteTodo(task);
-      } else {
-        task.done=true;
-        markTaskAsDone(task,form);
-      }
-  }
-$scope.allocateTaskToMe = function(task,form) {
 
-    $http.put('/api/allocatetome/'+task.id, task)
-    .success(function(data) {
-        
-        console.log(data);
-        $scope.getTodos();
-    })
-    .error(function(data) {
-        console.log('Error: ' + data);
-    });
-};
+
 $scope.updateTask = function(task,form) {
 
     $http.put('/api/todo/'+task.id, task)
@@ -172,30 +68,7 @@ $scope.updateTask = function(task,form) {
         console.log('Error: ' + data);
     });
 };
-markTaskAsDone = function(task,form) {
 
-    $http.put('/api/taskdone/'+task.id, task)
-    .success(function(data) {
-        
-        console.log(data);
-        $scope.getTodos();
-    })
-    .error(function(data) {
-        console.log('Error: ' + data);
-    });
-};
-$scope.startAction = function(task,form) {
-
-    $http.post('/api/action', task)
-    .success(function(data) {
-        
-        console.log(data);
-        $scope.getTodos();
-    })
-    .error(function(data) {
-        console.log('Error: ' + data);
-    });
-};
     // when submitting the add form, send the text to the node API
     $scope.addTask = function(task,form) {
       if(task.duedate) {
@@ -207,10 +80,8 @@ $scope.startAction = function(task,form) {
 
         $http.post('/api/todos', task)
         .success(function(data) {
-                $scope.newTask = {}; // clear the form so our user is ready to enter another              
-                $scope.newformvisible = false;
-
-                $scope.getTodos();
+                $scope.newTask = {occurrence: "NOW"}; // clear the form so our user is ready to enter another              
+                $scope.message="Task has been created.";
             })
         .error(function(data) {
             console.log('Error: ' + data);
@@ -218,23 +89,9 @@ $scope.startAction = function(task,form) {
         });
     };
 
-    // delete a todo after checking it
-deleteTodo = function(task) {
-
-    	console.log("deleting node "+task.id);
-        $http.delete('/api/todo/' + task.id)
-        .success(function(data) {
-            console.log(data);
-            $scope.getTodos();
-        })
-        .error(function(data) {
-            console.log('Error: ' + data);
-        });
-    };
-
     var groupMap=  [];
     var groupList={};
-    $scope.mytaskOpened=false;
+
     init = function() {
         for (var g in $scope.userinfo.groups) {
           groupMap.push({ value: $scope.userinfo.groups[g].id, name: $scope.userinfo.groups[g].name }); 
@@ -453,7 +310,7 @@ deleteTodo = function(task) {
 
             $scope.userinfo = data;
             init();
-            $scope.getTodos();
+            
             
         })
         .error(function(data) {

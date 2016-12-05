@@ -19,6 +19,7 @@ app.config(['$routeProvider', function ($routeProvider) {
     .when("/", {templateUrl: "partials/landing.html", controller: "PageCtrl"})
     // Pages
     .when("/todos", {templateUrl: "partials/todo.html", controller: "todoController"})
+    .when("/newtask", {templateUrl: "partials/newtask.html", controller: "newtaskController"})
     .when("/location", {templateUrl: "partials/asset.html", controller: "assetController"})
     .when("/groups", {templateUrl: "partials/groups.html", controller: "groupsController"})
     .when("/help", {templateUrl: "partials/help.html", controller: "PageCtrl"})
@@ -51,8 +52,7 @@ app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
         });
 
   $scope.command="";
-  $scope.isNavCollapsed=true;
-  $scope.isNav2Collapsed=true;
+
   
   $scope.alert=undefined;
   $scope.closeAlert = function () {

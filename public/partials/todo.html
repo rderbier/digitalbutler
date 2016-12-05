@@ -1,10 +1,10 @@
 
     <div class="container"  >
-      <div class="btn-group">
-      <button ng-if="!newformvisible" type="button" class="btn btn-primary" ng-click="showFormNewTask()">
-      New Task </button>
-      
-    </div>
+      <ul>
+      Create a <a href="/#/newtask" >new task</a>
+
+      </ul>
+   
 
         
         <div  id="newTaskForm"  uib-collapse="!newformvisible">
@@ -17,25 +17,29 @@
         <!-- HEADER FOR ACTIONS -->
         <div ng-if="todos.actions.length>0" class=" text-left">
             <h2><span class="badge">{{ todos.actions.length }}</span>  tasks you can start</h2>
-            <div ng-repeat="todo in todos.actions">
-                <h3  data-toggle="collapse" data-target="#collapseExample" ng-class="{taskdone: todo.done}" ng-click="showTaskDetails(todo)" ><span class="clickable" title="{{todo.description}}" >{{ todo.title }} </span></h3>
-                <div ng-if="todo.id==currentTask.id" class="collapse" id="collapseExample">
-                    <div class="well">
-                        <form name="taskFormAction" sf-schema="taskSchema" sf-form="taskActionDetailsForm" sf-model="currentTask" ng-submit="startAction(currentTask,taskForm)"></form>
-                    </div>
-                </div>
+            <uib-accordion close-others="true" >
+            <div  uib-accordion-group class="panel-default" heading="{{ todo.title }} {{todo.duedatestr}}" ng-repeat="todo in todos.actions" title="{{todo.description}}">
+            
+                <span ng-if="todo.distribution=='GROUP'">{{todo.explanation}}</span>
+                        <form name="taskFormAction" sf-schema="taskSchema" sf-form="taskActionDetailsForm" sf-model="todo" ng-submit="startAction(todo,taskFormAction)"></form>
+                 
+              
             </div>
+            </uib-accordion>
         </div>
 
 
 
-        <!-- HEADER AND TODO COUNT -->
+         <!-- PERSONAL TASK 
+         -->
         <div ng-if="todos.me.length>0" class=" text-left">
             <h2><span class="badge">{{ todos.me.length }}</span>  in your list</h2>
             <uib-accordion close-others="true" >
-               <div  drag-container="true" drag-data="todo" uib-accordion-group class="panel-default" ng-class="{taskdone: todo.done}" heading="{{ todo.title }} {{todo.duedatestr}}" ng-repeat="todo in todos.me" title="{{todo.description}}">
-                    <span ng-if="todo.distribution=='GROUP'">{{todo.explanation}}</span>
-                    <form name={{todo.id}} sf-schema="taskSchema" sf-form="taskSelfDetailsForm" sf-model="todo" ng-submit="setTaskDone(todo,taskForm)"></form>
+               <div  uib-accordion-group class="panel-default" ng-class="{taskdone: todo.done}" heading="{{ todo.title }} {{todo.instance}} {{todo.duedatestr}}" ng-repeat="todo in todos.me" title="{{todo.description}}" ng-click="showMyTaskDetails(todo)">
+               <div ng-if="todo.id==currentMyTask.id">
+                    <span ng-if="currentMyTask.distribution=='GROUP'">{{currentMyTask.explanation}}</span>
+                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskSelfDetailsForm" sf-model="currentMyTask" ng-submit="setTaskDone(currentMyTask,taskForm)"></form>
+               </div>
                </div>
              </uib-accordion> 
         
@@ -51,7 +55,8 @@
 
             
 
-                <!-- HEADER AND TODO COUNT -->
+    <!-- SHARED TASK 
+    -->
         <div ng-if="todos.group.length>0" class=" text-left">
             <h2><span class="badge">{{ todos.group.length }}</span>  you can pick in the shared tasks</h2>
                     <!-- TODO LIST -->
@@ -60,12 +65,13 @@
 
                 <!-- LOOP OVER THE TODOS IN $scope.todos -->
                 
-                <div uib-accordion-group class="panel-default"  ng-class="{taskdone: todo.done}" heading="{{ todo.title }}" title="{{todo.description}}" ng-repeat="todo in todos.group">
-                 
-                      {{todo.explanation}}
-                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskGroupDetailsForm" sf-model="todo" ng-submit="allocateTaskToMe(todo)"></form>
-
+                <div uib-accordion-group class="panel-default"  ng-class="{taskdone: todo.done}" heading="{{ todo.title }} {{todo.instance}} {{todo.duedatestr}}" title="{{todo.description}}" ng-repeat="todo in todos.group"  ng-click="showGroupTaskDetails(todo)">
+                   <div ng-if="todo.id==currentGroupTask.id">
+                      {{currentGroupTask.explanation}}
+                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskGroupDetailsForm" sf-model="currentGroupTask" ng-submit="allocateTaskToMe(currentGroupTask)"></form>
+                    </div>
                 </div>
+                
 
 
 

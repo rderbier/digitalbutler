@@ -2,34 +2,34 @@
     <div class="container"  >
 
         <!-- HEADER AND TODO COUNT -->
-        <div ng-if="assets.length>0" class=" text-left">
-            <h1>Your are : </h1>
-        </div>
-        <div ng-if="assets.length==0" class=" text-left">
+       
+        <div ng-if="grouplist.length==0" class=" text-left">
             <h1>I don't have any group. You may start create one.</h1>
         </div>
 
-        <!-- TODO LIST -->
-        <div id="group-list" class="row">
-            <div >
+        <div ng-if="grouplist.length>0" class=" text-left">
+            <h2><span class="badge">{{ grouplist.length }}</span>  groups you are involved in.</h2>
+            <uib-accordion close-others="true" >
+               <!-- add the group creator if nedded
+                <span ng-if="group.createdby != userinfo.email">(created by {{group.createdby}})</span>" 
+                -->
 
-                <!-- LOOP OVER THE TODOS IN $scope.todos -->
-                <div ng-repeat="group in grouplist">
-                <h3 class="clickable" ng-click="getGroupDetails(group.id)">{{group.role}} of group {{group.name}} <span ng-if="group.createdby != userinfo.email">(created by {{group.createdby}})</span></h3>
-                <div ng-if="currentgroup==group.id">
-                     <div ng-repeat="member in groupdetailslist[group.id]">
-{{member.role}} {{member.email}}
+               <div  uib-accordion-group class="panel-default"  heading="{{group.role}} of group {{group.name}} " ng-repeat="group in grouplist" title="Group {{group.name}}" ng-click="getGroupDetails(group.id)">
+               <div ng-if="currentgroup==group.id">
+                     <div ng-repeat="(rolename,role) in groupdetailslist[group.id].roles">
+                        <h3>{{rolename}}</h3>
+                         <div ng-repeat="m in role.members">
+                        <span ng-if="m.alias!=undefined"> {{m.alias}} ( {{m.email}} )</span>
+                        <span ng-if="m.alias==undefined"> {{m.email}} </span>
+                         
                      </div>
-                </div>
-                    
-                </div>
-                
-                
-
-                
-
-            </div>
+                     </div>
+               </div>
+             </uib-accordion> 
+        
+             
         </div>
+ 
 
 
 

@@ -31,8 +31,13 @@ module.exports = function(app,  passport) {
      app.route('/api/todo/:todo_id') 
       .delete(isApiAuthenticated, dataController.deleteTodo)
       .put(isApiAuthenticated,dataController.updateTodo);
+     app.route('/api/taskdone/:todo_id') 
+      .put(isApiAuthenticated,dataController.setTaskDone);
     app.route('/api/allocatetome/:todo_id') 
       .put(isApiAuthenticated,dataController.allocateTaskToUser);
+     
+    app.route('/api/action')
+      .post(isApiAuthenticated,dataController.startTask);
      // API assets
      //
     app.get('/api/assets', isApiAuthenticated,dataController.getAssets);

@@ -13,14 +13,30 @@ var db = require("seraph")({
 	pass: url.auth.split(':')[1]
 });
 
-exports.getUser = function (id,done) { 
+function replyDbCallback(res) {
+ var f= function(err, data) {
+		if (err) {
+			console.log("error  : "+err.message);
+			res.send(err);
+			
+		} else {
+			// MATCH (g:GROUP) , (t:TODO)<-[r]-(u) WHERE id(t)=93 AND id(g)=77 DELETE r WITH t,u,g MERGE (t)<-[r:HASTO]-(g)
+			res.send(data);
+		}
+
+	};
+	return f;
+}
+
+var self = {
+getUser: function (id,done) { 
 	db.read(id, function(err, user) {
 		console.log("deserialize "+user.email) 
 		done(err, user);
 	});
-}
+},
 
-exports.createUser = function (email,password,done) {
+createUser:function (email,password,done) {
 	// find a user whose email is the same as the forms email
     // we are checking to see if the user trying to login already exists
     db.find({'email': email}, 'USER', function(err, users) {
@@ -66,9 +82,9 @@ exports.createUser = function (email,password,done) {
             }
 
         });  
-};
+},
 
-exports.verifyUser = function (username,password,callback) {
+verifyUser: function (username,password,callback) {
 	db.find({'email': username}, 'USER', function(err, users) {
             // if there are any errors, return the error before anything else
             if (err)
@@ -88,11 +104,11 @@ exports.verifyUser = function (username,password,callback) {
             // all is well, return successful user
             return callback(null, user);
         });
-}
+},
 
 
 
-getTodos = function (user,res) {
+getTodos : function (user,res) {
 	
 	// get and return all the todos after you create another
 	var tasklist={};
@@ -116,23 +132,19 @@ getTodos = function (user,res) {
 		
 	    });
 	});
-}
-exports.getTasks = function(req, res) {
-    getTodos(req.user,res);
-}
+},
+getTasks : function(req, res) {
+    self.getTodos(req.user,res);
+},
 
-exports.createTodo = function(req, res) {
-	createTask(user,req.body, function(err, todo) {
-			if (err) {
-				console.log("Error : "+err.message);
-				res.send(err);
-			} else {
-				getTodos(user,res);
-			} })
-}
+createTodo : function(req, res) {
+	self.createTask(req.user,req.body, replyDbCallback(res));
+},
 
-exports.createTask = function(user, task, done) {
-	
+createTask : function(user, task, done) {
+	if (task.distribution==undefined) {
+		task.distribution="PERSO";
+	} 
 	
 	if (task.distribution=="PERSO") {
           task.execUser=user.email;
@@ -147,10 +159,13 @@ exports.createTask = function(user, task, done) {
       set.push('t.createdon=timestamp()');
 	if (task.description)
 		set.push(' t.description="'+task.description+'"');
+
 	if (task.distribution)
 		set.push(' t.distribution="'+task.distribution+'"');
 	if (task.execGroupId)
 		set.push(' t.execGroupId="'+parseInt(task.execGroupId)+'"');
+	if (task.createdFrom)
+		set.push(' t.createdFrom='+task.createdFrom);
 	if (task.execGroupChoice)
 		set.push(' t.execGroupChoice="'+task.execGroupChoice+'"');
 	if (task.execUser)
@@ -188,12 +203,13 @@ exports.createTask = function(user, task, done) {
 	        	role=grouprole;
 	        }
 	      var query = 'MATCH (g:GROUP) WHERE id(g)='+groupid+' ';
-		  query+='MERGE (g)-[r:'+relation+' {role:"'+role+'"}]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'", done: false}) ';
+	      // properties in the MATCH to insure creation of task with same title but different instance
+		  query+='MERGE (g)-[r:'+relation+' {role:"'+role+'"}]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'", instance:"'+task.instance+'", topic:"'+task.topic+'", done: false}) ';
 		  query+='WITH  t SET '+set+ ' RETURN t';
 		
 		} else {
 	      var query = 'MATCH (u:USER) WHERE u.email="'+useremail+'" ';
-		  query+='MERGE (u)-[r:'+relation+']-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'", done: false}) ';
+		  query+='MERGE (u)-[r:'+relation+']-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'", instance:"'+task.instance+'", topic:"'+task.topic+'", done: false}) ';
 		  query+='WITH  t SET '+set+ ' RETURN t';
 		
 		}
@@ -203,8 +219,16 @@ exports.createTask = function(user, task, done) {
 		db.query(query, done);
     }
 
-}
-exports.allocateTaskToUser = function(req, res) {
+},
+startTask : function(req, res) {
+	// create a task based ona task template
+	var task=req.body;
+	task.occurrence="NOW";  // change ATWILL from the template to NOW for this instance
+	task.createdFrom=task.id; // trace the origin of this task
+
+	self.createTask(req.user,task, replyDbCallback(res));
+},
+allocateTaskToUser : function(req, res) {
 
 	var user = req.user;
 	var task=req.body;
@@ -220,19 +244,19 @@ exports.allocateTaskToUser = function(req, res) {
 			console.log("query  : "+query);
 		} else {
 			// MATCH (g:GROUP) , (t:TODO)<-[r]-(u) WHERE id(t)=93 AND id(g)=77 DELETE r WITH t,u,g MERGE (t)<-[r:HASTO]-(g)
-			getTodos(user,res);
+			res.send(todo);
 		}
 
 	});
 
 
-}
-exports.updateTodo = function(req, res) {
+},
+updateTask : function(user, taskid, task, res, done) {
 
-	var user = req.user;
-	var task=req.body;
-
-	var query = 'MATCH (t:TODO) WHERE id(t)='+parseInt(req.params.todo_id)+' AND t.createdby="'+user.email+'" SET ';
+	
+// TODO : security update only element 'related' to current user 
+// still to be difined 
+	var query = 'MATCH (t:TODO) WHERE id(t)='+taskid+'  SET ';
 	var set=[];
 	if (task.title)
 		set.push(' t.title="'+task.title+'"');
@@ -250,24 +274,68 @@ exports.updateTodo = function(req, res) {
 	query+=set.join(" , ");
 	query+=' RETURN t';
 	
-	console.log("update task : "+req.params.todo_id," - "+ req.body.title);
-	console.log("query  : "+query);
+	console.log("update task : "+taskid," - "+ task.title);
 
 
-	db.query(query , function(err, todo) {
-		if (err) {
-			res.send(err);
-		} else {
-			// MATCH (g:GROUP) , (t:TODO)<-[r]-(u) WHERE id(t)=93 AND id(g)=77 DELETE r WITH t,u,g MERGE (t)<-[r:HASTO]-(g)
-			getTodos(user,res);
-		}
-
-	});
+	db.query(query, done);
 
 
-}
+},
+updateTodo : function(req, res) {
+	var user = req.user;
+	var task=req.body;
+	self.updateTask(user,parseInt(req.params.todo_id), task, res, replyDbCallback(res))
+},
+setTaskDone : function(req, res) {
+    var user = req.user;
+	var task=req.body;
+	task.done=true;
+	if (task.createdFrom != undefined) {
+		// update task and check if there are some next task from template
+		self.updateTask(user,task.id, task, res, function(err, data) {
+			if (err) {
+				console.log("error  : "+err.message);
+				res.send(err);
+				
+			} else {
+				// MATCH (g:GROUP) , (t:TODO)<-[r]-(u) WHERE id(t)=93 AND id(g)=77 DELETE r WITH t,u,g MERGE (t)<-[r:HASTO]-(g)
+				var querynext='MATCH (t1:TODO)-[:NEXT]-(t:TODO) WHERE id(t1)='+task.createdFrom+' return t';
+	            db.query(querynext, function (err,ndata) {
+	            	if (err) { res.send(err)}
+	            	else {
+	            		for ( var i in ndata) {
+			            	var ntask=ndata[i];
+			            	ntask.createdFrom=ntask.id; // trace the origin of this task
+			            	ntask.instance=task.instance;
+			            	ntask.occurrence="NOW";  // change ATWILL from the template to NOW for this instance
+				            
 
-exports.deleteTodo = function(req, res) {
+							self.createTask(req.user,ntask, function (err,newtask) {
+								if (err) {
+
+								} else {
+									// create a NEXT relation to follow the instance 
+									var querycreatenext='MATCH (t1:TODO),(t2:TODO) WHERE id(t1)='+task.id+' AND id(t2)='+newtask.id+' CREATE (t1)-[n:NEXT]->(t2) return t2';
+	                                db.query(querycreatenext, function (err,ndata) {});
+								}
+							});
+			            }
+	            	}	
+	            });
+	            // return the initial done task
+                res.send(data);
+			}
+
+	    });
+
+	} else {
+		// simply update the task
+		self.updateTask(user, task.id, task, res, replyDbCallback(res))
+	}
+	
+},
+
+deleteTodo : function(req, res) {
 	var user = req.user;
 	console.log("deleting node "+req.params.todo_id);
     
@@ -281,13 +349,13 @@ exports.deleteTodo = function(req, res) {
 
     		} else {
     			console.log("node deleted ");
-    			getTodos(user,res);
+    			res.send("");
     		}
     	});
 
-}    
+},   
 
-exports.getAssets = function(req, res) {
+getAssets : function(req, res) {
 	var user = req.user;
 	var query = 'MATCH (o:OBJECT)-[r:ISIN]-(l:LOCATION) return o.name AS object, l.name as location';
 
@@ -298,20 +366,16 @@ exports.getAssets = function(req, res) {
 	});
 
 
-}
-exports.getGroups = function(req, res) {
+},
+getGroups : function(req, res) {
 	var user = req.user;
 	var query = 'MATCH (u:USER)-[m:MEMBER]-(g:GROUP) WHERE id(u)={userid} return m.role as role,id(g) as id, g.name as name,g.createdby as createdby';
 
-	db.query(query, {userid: user.id},function(err, result) {
-		if (err)
-			res.send(err)
-		res.json(result);
-	});
+	db.query(query, {userid: user.id},replyDbCallback(res));
 
 
-}
-exports.getUserInfo = function(req, res) {
+},
+getUserInfo : function(req, res) {
 	var user = req.user;
 	var userinfo={};
 
@@ -330,17 +394,31 @@ exports.getUserInfo = function(req, res) {
 	});
 
 
-}
-exports.getGroup = function(req, res) {
-
+},
+getGroup : function(req, res) {
+    // return group information, list of roles and for each role list of members
+    // login user has to be a member to be allowed to retrieve group information
 	var user = req.user;
 	var groupid=parseInt(req.params.group_id);
 	console.log("get group details for user "+user.id+" group "+groupid)
-	var query = 'MATCH (u:USER)-[:MEMBER]-(g:GROUP) WHERE id(u)={userid} AND id(g)={groupid} WITH g MATCH (u2:USER)-[m:MEMBER]-(g) RETURN m.role as role, u2.email as email';
+	var query = 'MATCH (u:USER)-[:MEMBER]-(g:GROUP) WHERE id(u)={userid} AND id(g)={groupid} WITH g MATCH (u2:USER)-[m:MEMBER]-(g) RETURN g.name as name, m.role as role, m.aka as alias, u2.email as email';
 
 	db.query(query, {userid: user.id, groupid: groupid},function(err, result) {
 		if (err)
 			res.send(err)
-		res.json(result);
+		// build the group information 
+		var g={ name: "", roles:{}};
+		for (i in result) {
+			var m=result[i];
+			g.name = m.name;
+			if (g.roles[m.role]==undefined) {
+				g.roles[m.role]={ members: []}
+			}
+			g.roles[m.role].members.push({ alias: m.alias, email: m.email});
+		}
+		res.json(g);
 	});
 }
+}
+
+module.exports = self;

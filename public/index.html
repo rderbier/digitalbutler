@@ -24,10 +24,10 @@
 <script src="/js/angular/angular-animate.min.js"></script>
 <script src="/js/angular/angular-touch.min.js"></script>
 <script src="/js/angular/angular-route.min.js"></script>
-<script src="/js/angular/angular-drag-drop.js"></script>
+
 <script src="/js/angular-sanitize/angular-sanitize.min.js"></script>
 <script src="/js/ui-bootstrap/ui-bootstrap-tpls-2.3.0.min.js"></script>
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/theme.min.css">
    
     <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
 
@@ -46,7 +46,8 @@
 <!-- Our Website Content Goes Here -->
 
 <div ng-include='"templates/header.html"'></div>
-<div ng-include='"partials/command.html"' ng-if="userinfo.login==true"></div>
+<!--div ng-include='"partials/command.html"' ng-if="userinfo.login==true"></div>
+-->
 <div ng-view></div>
 <div ng-include='"templates/footer.html"'></div>
 
@@ -61,6 +62,7 @@
 <script src="/js/objectpath/objectpath.js"></script>
 <script src="/js/angular-schema-form/dist/schema-form.js"></script>
 <script src="/js/angular-schema-form-bootstrap/bootstrap-decorator.js"></script>
+<script src="/js/angular-schema-form/datetimepicker.js"></script>
 <!--
 <script src="/js/pickadate/lib/picker.js"></script>
 <script src="/js/pickadate/lib/picker.date.js"></script>
@@ -70,6 +72,7 @@
 <!-- Our Website Javascripts -->
 <script src="js/main.js"></script>
 <script src="js/todo.js"></script>
+<script src="js/newtask.js"></script>
 <script src="js/asset.js"></script>
 <script src="js/group.js"></script>
 
