@@ -38,6 +38,8 @@ module.exports = function(app,  passport) {
      
     app.route('/api/action')
       .post(isApiAuthenticated,dataController.startTask);
+    app.route('/api/actions')
+      .get(isApiAuthenticated,dataController.getActions);
      // API assets
      //
     app.get('/api/assets', isApiAuthenticated,dataController.getAssets);
@@ -63,7 +65,20 @@ module.exports = function(app,  passport) {
         failureRedirect : '/', // redirect back to the signup page if there is an error
         failureFlash : true // allow flash messages
     }));
+    // =====================================
+    // GOOGLE ROUTES =======================
+    // =====================================
+    // send to google to do the authentication
+    // profile gets us their basic information including their name
+    // email gets their emails
+    app.get('/auth/google', passport.authenticate('google', { scope : ['profile', 'email'] }));
 
+    // the callback after google has authenticated the user
+    app.get('/auth/google/callback',
+            passport.authenticate('google', {
+                    successRedirect : '/',
+                    failureRedirect : '/'
+            }));
     // =====================================
     // SIGNUP ==============================
     // =====================================

@@ -3,9 +3,24 @@
    
 
         
-        <div  id="newTaskForm"  uib-collapse="!newformvisible">
+        <div  id="newTaskForm" >
+        <h3>{{newTask.explanation}}</h3>
         <div class="well">
-        <form name="taskFormNew" sf-schema="taskSchema" sf-form="newTaskForm" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
+        
+        <form ng-if="formphase=='title'" name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormTitle" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
+
+
+
+         <form ng-if="formphase=='topic'"  name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormTopic" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
+
+
+         <form ng-if="formphase=='when'"  name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormWhen" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
+
+         <form ng-if="formphase=='execgroup'"  name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormExecGroup" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
+
+         <form ng-if="formphase=='atwill'"  name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormAtwill" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
+
+          <form ng-if="formphase=='chained'"  name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormChained" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
 
         </div>
         </div>

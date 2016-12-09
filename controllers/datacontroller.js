@@ -43,7 +43,7 @@ createUser:function (email,password,done) {
             // if there are any errors, return the error
             if (err) {
             	console.log('Search user in graph - error ' + err);
-            	return done(err);
+            	 done(err);
             }
             // set the user's local credentials
             var hashPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
@@ -62,7 +62,7 @@ createUser:function (email,password,done) {
                 db.save(user,'password', hashPassword , function(err) {
                 	if (err)
                 		throw err;
-                	return done(null, user);
+                	 done(null, user);
                 });
             }
         } else {
@@ -76,8 +76,8 @@ createUser:function (email,password,done) {
                 	'password': hashPassword
                 },'USER', function(err,newuser) {
                 	if (err)
-                		throw err;
-                	return done(null, newuser);
+                		done(err);
+                	 done(null, newuser);
                 });
             }
 
@@ -88,19 +88,49 @@ verifyUser: function (username,password,callback) {
 	db.find({'email': username}, 'USER', function(err, users) {
             // if there are any errors, return the error before anything else
             if (err)
-            	return callback(err);
+            	 return callback(err);
 
             // if no user is found, return the message
             if (users.length==0)
-                return callback(null, false); // req.flash is the way to set flashdata using connect-flash
+                 return callback(null, false); // req.flash is the way to set flashdata using connect-flash
 
             // if the user is found but the password is wrong
             // TODO : change to crypted version
             var user=users[0];
             console.log("Testing user password "+password+" vs "+user.password)
             if (bcrypt.compareSync(password, user.password)==false) 
-                return callback(null, false); // create the loginMessage and save it to session as flashdata
+                 return callback(null, false); // create the loginMessage and save it to session as flashdata
 
+            // all is well, return successful user
+             return callback(null, user);
+        });
+},
+userByGoogleId: function (googleid,email,token,callback) {
+	db.find({'googleid': googleid}, 'USER', function(err, users) {
+            // if there are any errors, return the error before anything else
+            if (err)
+            	 return callback(err);
+
+            // if no user is found, return the message
+            if (users.length==0) {
+            	// store the user information
+
+                db.save({
+                	'email' : email,
+                	'token': token,
+                	'googleid': googleid
+                },'USER', function(err,newuser) {
+                	if (err)
+                		callback(err);
+                	return callback(null,newuser);
+                });
+                 return callback(null, false); // req.flash is the way to set flashdata using connect-flash
+            }
+
+            // if the user is found but the password is wrong
+            // TODO : change to crypted version
+            var user=users[0];
+            
             // all is well, return successful user
             return callback(null, user);
         });
@@ -136,9 +166,17 @@ getTodos : function (user,res) {
 getTasks : function(req, res) {
     self.getTodos(req.user,res);
 },
+getActions : function (req,res) {
+	// find taks related to user by ACTION and by NEXT relations
+    var user = req.user;
+
+	var query = 'MATCH (u:USER)-[a:ACTION]-()-[:NEXT*0..]-(t:TODO) WHERE id(u)={userid} return t';
+	db.query(query, {userid: user.id},replyDbCallback(res));
+},
 
 createTodo : function(req, res) {
 	self.createTask(req.user,req.body, replyDbCallback(res));
+
 },
 
 createTask : function(user, task, done) {
@@ -178,11 +216,21 @@ createTask : function(user, task, done) {
 		set.push(' t.occurrence="'+task.occurrence+'"');
 	if (task.trigOption)
 		set.push(' t.trigOption="'+task.trigOption+'"');
+	if (task.trigGroupRole)
+		set.push(' t.trigGroupRole="'+task.trigGroupRole+'"');
+	if (task.trigGroupId)
+		set.push(' t.trigGroupId='+parseInt(task.trigGroupId));
 	if (task.duedate)
 		set.push(' t.duedate='+task.duedate);
-	if (task.occurence == 'CHAINED') {
-		console.log("Chained task not implemented yet");
-		getTodos(user,res);
+	if (task.occurrence == 'CHAINED') {
+		console.log("Chained task ");
+		
+		var query = 'MATCH (u:USER)-[a:ACTION]-()-[:NEXT*0..]-(t1:TODO) WHERE id(u)={userid} AND id(t1)={taskid} WITH t1 ';
+		query+='MERGE (t1)-[r:NEXT]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'", instance:"'+task.instance+'", topic:"'+task.topic+'", done: false}) ';
+		query+='WITH  t SET '+set+ ' RETURN t';
+		console.log("Chaining task : "+task.title);
+        console.log("query: "+query);
+		db.query(query, {userid: user.id, taskid: parseInt(task.chainedFrom)},done);
 	} else {
 		var relation="HASTO";
 		var groupid = task.execGroupId; // using notion of doing a task
@@ -214,7 +262,7 @@ createTask : function(user, task, done) {
 		
 		}
 		
-		console.log("receive task : "+task.title);
+		console.log("Creating task : "+task.title);
         console.log("query: "+query);
 		db.query(query, done);
     }
@@ -359,11 +407,7 @@ getAssets : function(req, res) {
 	var user = req.user;
 	var query = 'MATCH (o:OBJECT)-[r:ISIN]-(l:LOCATION) return o.name AS object, l.name as location';
 
-	db.query(query, {userid: user.id},function(err, result) {
-		if (err)
-			res.send(err)
-		res.json(result);
-	});
+	db.query(query, {userid: user.id},replyDbCallback(res));
 
 
 },

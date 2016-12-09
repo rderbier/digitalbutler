@@ -17,6 +17,7 @@
     "passport": "~0.1.17",
     "passport-http": "latest",
     "passport-local": "~0.1.6",
+    "passport-google-oauth":"latest",
     "seraph": "^0.15.2",
     "sparkpost": "latest"
   }
