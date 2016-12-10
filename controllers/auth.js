@@ -31,7 +31,7 @@ var configAuth = {
 //hg-v-In1N9CR4gV4Ih1BE9GZ
         'clientID'      : '682843972558-4uv1hers8ga26n21hgj0ccv1sovmf06g.apps.googleusercontent.com',
         'clientSecret'  : 'hg-v-In1N9CR4gV4Ih1BE9GZ',
-        'callbackURL'   : 'http://localhost:8082/auth/google/callback'
+        'callbackURL'   : 'http://www.digitalbutlerservice.com/auth/google/callback'
     }
 
 };
