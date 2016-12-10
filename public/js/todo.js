@@ -135,10 +135,7 @@ $scope.showMyTaskDetails = function(task) {
     $scope.newformvisible = false; 
     $scope.mytaskOpened=false;  
 };
-$scope.showFormNewTask = function(task) {
-    $scope.newformvisible = true; 
-    $scope.currentTask = null;    
-};
+
 // when submitting the add form, send the text to the node API
 $scope.setTaskDone = function(task,form) {
       if (task.done==true) {

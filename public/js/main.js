@@ -36,7 +36,7 @@ app.config(['$routeProvider', function ($routeProvider) {
 /**
  * homecontrol
  */
-app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
+app.controller('mainCtrl',  function mainCtrl($rootScope, $scope, $location, $http) {
     console.log("mainCtrl started");
       // when landing on the page, get all todos and show them
     $http.get('/api/userinfo')
@@ -50,7 +50,10 @@ app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
             $location.path("/");
             console.log('Error: ' + data);
         });
-
+  if (window.hasOwnProperty('webkitSpeechRecognition')) {
+     var recognition = new webkitSpeechRecognition();
+   }
+   
   $scope.command="";
 
   
@@ -58,30 +61,82 @@ app.controller('mainCtrl',  function mainCtrl($scope, $location, $http) {
   $scope.closeAlert = function () {
     $scope.alert=undefined;
   }
+  $scope.endofrecognition = function(e) {
+        $scope.command = e.results[0][0].transcript;
+        recognition.stop();
+        $scope.sendCommand($scope.command);   
+        $scope.$apply();
+      };
+  $scope.startDictation = function() {
+ 
+    if (recognition!=undefined) {
+ 
+      
+ 
+      recognition.continuous = false;
+      recognition.interimResults = false;
+ 
+      recognition.lang = "en-US";
+      
+      $scope.command="Listening ...";
+      recognition.onresult = $scope.endofrecognition;
 
-  $scope.sendCommand = function() {
+      recognition.start();
+      recognition.onerror = function(e) {
+        recognition.stop();
+      }
+ 
+    }
+  }
+
+
+  $scope.sendCommand = function(command) {
+    // try to understand locally
+  
+    var getit=false;;
+    var match;
+    match=command.match(/(?:[\w,\s]*)new task/i);
+        if(match!=null) {
+           getit=true;
+           $location.path("/newtask");
+        }
+    match=command.match(/(?:[\w,\s]*)have to ([\w,\s]*)/i);
+    if(match!=null) {
+           getit=true;
+           $rootScope.newTask={ title: match[1].trim()}
+
+           
+           $location.path("/newtask");
+        }
+
+    if (getit==false) {
+            
     // !!! use this instead of $Scope as with are using nested controllers 
-    console.log("Sending command "+this.command);
-    $scope.showResult=false;
-        $http.get('/command', {params: { command: this.command} }).success(function(data) {
+      console.log("Sending command "+this.command);
+      $scope.showResult=false;
+          $http.get('/command', {params: { command: this.command} }).success(function(data) {
 
-                $scope.command = ""; // clear the form so our user is ready to enter another
-                $scope.alert = {msg: data.message};
-                $scope.context = data.context;
-                $scope.page=data.page;
-                if (data.getit==true) {
-                  $location.path(data.page);
-                } else {
-                  $location.path('help');
-                }
-                console.log(data);
-            })
-            .error(function(data) {
-                console.log('Error: ' + data);
-            });
-    };
-}
-);
+                  
+                  $scope.alert = {msg: data.message};
+                  $scope.context = data.context;
+                  $scope.page=data.page;
+                  $scope.getit=data.getit;
+                  if (data.getit==true) {
+                    $location.path(data.page);
+                  } else {
+                    // $location.path('help');
+                    $scope.alert = {msg: "Sorry, did not get : '"+$scope.command+"' !"};
+                    $scope.command = ""; // clear the form so our user is ready to enter another
+                  }
+                  console.log(data);
+              })
+              .error(function(data) {
+                  console.log('Error: ' + data);
+              });
+      }
+   }
+ });
+
 
 /**
  * Controls all other Pages

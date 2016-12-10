@@ -10,14 +10,16 @@
    
                 
                 <form class="form-inline">
+                {{command}}
                     <p class="context-info">{{context}}</p>
-                    <div class="form-group large-control">
+                    <div class="form-group large-control speech">
                         
                         <!-- BIND THIS VALUE TO fcommand IN ANGULAR -->
-                        <input type="text" class="form-control " name="command" ng-model="command" placeholder="Enter a fact or a question." >
+                        <input type="text" class="form-control " id="transcript" ng-model="command"  >
+                        <img class="pulse" ng-click="startDictation()" src="/img/microphone.gif" />
                         
                     </div>
-                    <button type="submit" class="btn btn-primary" ng-click="sendCommand()">Try</button>
+                    <button type="submit" class="btn btn-primary" ng-click="sendCommand(command)">Try</button>
 
                   </form> 
 
@@ -25,7 +27,8 @@
 
             
         </div>
-       </div>
+</div>
+<div ng-include='"partials/help.html"' ng-if="getit==false"></div>
       
         
         

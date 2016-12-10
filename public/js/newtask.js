@@ -1,11 +1,16 @@
 // todo.js
 var app = angular.module('digitalbutler');
 
-app.controller('newtaskController',['$scope', '$http', '$location', function newtaskController($scope, $http, $location) {
-    $scope.newformvisible = true; 
-    $scope.newTask = {
-      occurrence: "NOW"
-    };
+app.controller('newtaskController',['$rootScope','$scope', '$http', '$location', function newtaskController($rootScope, $scope, $http, $location) {
+    $scope.newformvisible = true;
+    if ($rootScope.newTask!=undefined) {
+         $scope.newTask = $rootScope.newTask;
+         $scope.newTask.occurrence = "NOW";
+    } else {
+       $scope.newTask = {
+         occurrence: "NOW"
+      };
+    }
     $scope.formphase="title";
     var getGroupDetails = function(groupid) {
     	return ($http.get('/api/group/'+groupid));
@@ -743,7 +748,7 @@ init = function() {
         .success(function(data) {
            if (data.login == true ) {
             $scope.userinfo = data;
-            clearForm();
+            //clearForm();
             init();
            } else {
            	$location.path("/");

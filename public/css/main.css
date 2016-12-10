@@ -11,6 +11,28 @@ For more info and more free Bootstrap 3 HTML themes, visit http://startbootstrap
 }
 
 */
+
+  .speech {border: 1px solid #DDD; width: 300px; padding: 0; margin: 0}
+  .speech input {border: 0; width: 240px; display: inline-block; height: 30px;}
+  .speech img {float: right; width: 40px }
+/*
+ * Pulse animation
+*/
+@-webkit-keyframes pulse {
+    0% { -webkit-transform: scale(1); }
+    50% { -webkit-transform: scale(1.1); }
+    100% { -webkit-transform: scale(1); }
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+.pulse {
+    -webkit-animation-name: pulse;
+    animation-name: pulse;
+}
+
 .google-sso-cta {
     display: inline-block;
     font-family: 'Gotham_SSm_5r',Helvetica,Arial,sans-serif;
