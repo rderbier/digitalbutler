@@ -18,8 +18,10 @@ app.config(['$routeProvider', function ($routeProvider) {
     // Home
     .when("/", {templateUrl: "partials/landing.html", controller: "PageCtrl"})
     // Pages
-    .when("/todos", {templateUrl: "partials/todo.html", controller: "todoController"})
+    .when("/todos", {templateUrl: "partials/mytasks.html", controller: "todoController"})
+    .when("/actions", {templateUrl: "partials/todo.html", controller: "todoController"})
     .when("/newtask", {templateUrl: "partials/newtask.html", controller: "newtaskController"})
+    .when("/sharedtasks", {templateUrl: "partials/sharedtasks.html", controller: "todoController"})
     .when("/location", {templateUrl: "partials/asset.html", controller: "assetController"})
     .when("/groups", {templateUrl: "partials/groups.html", controller: "groupsController"})
     .when("/help", {templateUrl: "partials/help.html", controller: "PageCtrl"})
@@ -57,9 +59,9 @@ app.controller('mainCtrl',  function mainCtrl($rootScope, $scope, $location, $ht
   $scope.command="";
 
   
-  $scope.alert=undefined;
+  $rootScope.alert={msg:""};
   $scope.closeAlert = function () {
-    $scope.alert=undefined;
+    $rootScope.alert={msg:""};
   }
   $scope.endofrecognition = function(e) {
         $scope.command = e.results[0][0].transcript;
@@ -117,7 +119,7 @@ app.controller('mainCtrl',  function mainCtrl($rootScope, $scope, $location, $ht
           $http.get('/command', {params: { command: this.command} }).success(function(data) {
 
                   
-                  $scope.alert = {msg: data.message};
+                  $rootScope.alert = {msg: data.message};
                   $scope.context = data.context;
                   $scope.page=data.page;
                   $scope.getit=data.getit;
@@ -125,7 +127,7 @@ app.controller('mainCtrl',  function mainCtrl($rootScope, $scope, $location, $ht
                     $location.path(data.page);
                   } else {
                     // $location.path('help');
-                    $scope.alert = {msg: "Sorry, did not get : '"+$scope.command+"' !"};
+                    $rootScope.alert = {msg: "Sorry, did not get : '"+$scope.command+"' !"};
                     $scope.command = ""; // clear the form so our user is ready to enter another
                   }
                   console.log(data);

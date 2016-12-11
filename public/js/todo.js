@@ -87,34 +87,56 @@ $scope.taskGroupDetailsForm =  [
     ];
 
 
-$scope.taskExplanation = function (task) {
+$scope.setTaskStrings = function (task) {
   // create a readable explanation of the task
-  var str="Task "+task.title+" must be done "+task.occurrence+" by "+task.execGroupRole+" of group "+task.execGroupName;
-  return str;
+  var role=" anyone ";
+    if (task.execGroupRole!="ANY") {
+      role = " any "+task.execGroupRole+" ";
+    }
+  var str="Task "+task.title+" must be done "+task.occurrence+" by "+role+" from group "+task.execGroupName;
+  task.explanation=str;
+  var header=task.title;
+  if ( task.instance ) {
+    header+=" - "+task.instance;
+  }
+  if ( task.duedatestr ) {
+    header+=" due "+task.duedatestr;
+  }
+ 
+  if (task.distribution=="GROUP") { 
+    
+    header+=" sent to "+role+" of group "+task.execGroupName;
+  }
+  
+  task.header=header;
+  
   } 
 
     // when landing on the page, get all todos and show them
 $scope.getTodos = function() {
+        var mytasks=0;
+        var mydone=0;
         $http.get('/api/todos')
         .success(function(data) {
           //$scope.todos.clear();
           for (var t in data.me) {
                var task = data.me[t];
-               var str=$scope.taskExplanation(task);
-               task.explanation=str;
+               
                if (task.duedate) {
                   var d=new Date(task.duedate);
                   task.duedatestr=d.toUTCString().substr(0,11);
                }
+               $scope.setTaskStrings(task);
+               
             }
           for (var t in data.group) {
                var task = data.group[t];
-               var str=$scope.taskExplanation(task);
-               task.explanation=str;
+               
                if (task.duedate) {
                   var d=new Date(task.duedate);
                   task.duedatestr=d.toUTCString().substr(0,11);
                }
+               $scope.setTaskStrings(task);
             }
             $scope.todos = data;
             console.log(data);
@@ -142,7 +164,17 @@ $scope.setTaskDone = function(task,form) {
         deleteTodo(task);
       } else {
         task.done=true;
-        markTaskAsDone(task,form);
+        markTaskAsDone(task);
+      }
+  }
+  // when submitting the add form, send the text to the node API
+$scope.checkTask = function(task,$event) {
+      if (task.done==true) {
+        
+      } else {
+        task.done=true;
+        markTaskAsDone(task);
+        $event.stopPropagation();
       }
   }
 $scope.allocateTaskToMe = function(task,form) {
@@ -169,7 +201,7 @@ $scope.updateTask = function(task,form) {
         console.log('Error: ' + data);
     });
 };
-markTaskAsDone = function(task,form) {
+markTaskAsDone = function(task) {
 
     $http.put('/api/taskdone/'+task.id, task)
     .success(function(data) {

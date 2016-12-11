@@ -226,6 +226,7 @@ createTask : function(user, task, done) {
 		console.log("Chained task ");
 		
 		var query = 'MATCH (u:USER)-[a:ACTION]-()-[:NEXT*0..]-(t1:TODO) WHERE id(u)={userid} AND id(t1)={taskid} WITH t1 ';
+		// it is a CHAINED task so there is an instance.
 		query+='MERGE (t1)-[r:NEXT]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'", instance:"'+task.instance+'", topic:"'+task.topic+'", done: false}) ';
 		query+='WITH  t SET '+set+ ' RETURN t';
 		console.log("Chaining task : "+task.title);
@@ -252,12 +253,23 @@ createTask : function(user, task, done) {
 	        }
 	      var query = 'MATCH (g:GROUP) WHERE id(g)='+groupid+' ';
 	      // properties in the MATCH to insure creation of task with same title but different instance
-		  query+='MERGE (g)-[r:'+relation+' {role:"'+role+'"}]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'", instance:"'+task.instance+'", topic:"'+task.topic+'", done: false}) ';
+		  query+='MERGE (g)-[r:'+relation+' {role:"'+role+'"}]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'"';
+		  if (task.instance!=undefined)
+		  	query +=', instance:"'+task.instance+'"';
+		  if (task.topic!=undefined) 
+		  	query+=', topic:"'+task.topic+'"';
+		  query+=', done: false}) ';
+
 		  query+='WITH  t SET '+set+ ' RETURN t';
 		
 		} else {
 	      var query = 'MATCH (u:USER) WHERE u.email="'+useremail+'" ';
-		  query+='MERGE (u)-[r:'+relation+']-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'", instance:"'+task.instance+'", topic:"'+task.topic+'", done: false}) ';
+		  query+='MERGE (u)-[r:'+relation+']-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'"';
+		  if (task.instance!=undefined)
+		  	query +=', instance:"'+task.instance+'"';
+		  if (task.topic!=undefined) 
+		  	query+=', topic:"'+task.topic+'"';
+		  query+=', done: false}) ';
 		  query+='WITH  t SET '+set+ ' RETURN t';
 		
 		}

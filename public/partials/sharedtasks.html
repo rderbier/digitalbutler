@@ -1,0 +1,44 @@
+
+    <div class="container"  >
+     
+      <ul>
+      
+      <li>Add <a href="/#/newtask" >new task</a></li>
+      <li>Send <a href="/#/newtask" >a task</a></li>
+      </ul>
+
+
+            
+
+    <!-- SHARED TASK 
+    -->
+        <div ng-if="todos.group.length>0" class=" text-left">
+            <h2><span class="badge">{{ todos.group.length }}</span>  you can pick from the shared tasks</h2>
+                    <!-- TODO LIST -->
+
+            <uib-accordion close-others="true" >
+
+                <!-- LOOP OVER THE TODOS IN $scope.todos -->
+                
+                <div uib-accordion-group class="panel-default"  ng-class="{taskdone: todo.done}" heading="{{ todo.header }}" title="{{todo.description}}" ng-repeat="todo in todos.group"  ng-click="showGroupTaskDetails(todo)">
+                   <div ng-if="todo.id==currentGroupTask.id">
+                      {{currentGroupTask.explanation}}
+                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskGroupDetailsForm" sf-model="currentGroupTask" ng-submit="allocateTaskToMe(currentGroupTask)"></form>
+                    </div>
+                </div>
+                
+
+
+
+            </uib-accordion> 
+        </div>
+        <div ng-if="todos.group.length==0" class=" text-left">
+            <h2>I don't have any shared task you can work on </h2>
+        </div>
+
+ 
+
+
+
+    </div>
+

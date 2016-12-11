@@ -78,4 +78,5 @@
     </div>
     <!-- /.container -->
 </nav>
+<div uib-alert ng-if="alert.msg!=''" ng-class="'alert-' + (alert.type || 'warning')" dismiss-on-timeout="2000" close="closeAlert()">{{alert.msg}}</div>
         
