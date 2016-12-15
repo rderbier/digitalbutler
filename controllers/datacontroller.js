@@ -159,7 +159,7 @@ getTodos : function (user, timestamp,done) {
 	// 
 	
 	var tasklist={};
-	var query = 'MATCH (u:USER)-[:HASTO]-(t:TODO) WHERE (id(u)={userid} AND (NOT has(t.dateRemind) OR (t.dateRemind < {timestamp}))) RETURN t  ORDER BY t.dateDue ASC LIMIT 100 ';
+	var query = 'MATCH (u:USER)-[:HASTO]-(t:TODO) WHERE (id(u)={userid} AND (NOT EXISTS(t.dateRemind) OR (t.dateRemind < {timestamp}))) RETURN t  ORDER BY t.dateDue ASC LIMIT 100 ';
     var query2= 'MATCH (u)-[:MEMBER]-(g)-[:HASTO]-(t:TODO)  WHERE id(u)={userid} return t ORDER BY t.dateDue ASC LIMIT 100'; 
     var queryActions='MATCH (u:USER) WHERE id(u)={userid} WITH u MATCH (u)-[a:ACTION]-(t:TODO)  return t UNION MATCH (u)-[:MEMBER*0..]-(g:GROUP)-[a:ACTION]-(t:TODO)  return t';
 	db.query(query, {userid: user.id, timestamp: timestamp},function(err, todos) {
