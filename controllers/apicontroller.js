@@ -26,7 +26,7 @@ function replyDbCallback(res) {
 var self = {
 
 getTasks : function(req, res) {
-    dataController.getTodos(req.user,res);
+    dataController.getTodos(req.user,Date.now(),replyDbCallback(res));
 },
 getActions : function (req,res) {
 	// find taks related to user by ACTION and by NEXT relations

@@ -154,32 +154,38 @@ userByGoogleId: function (googleid,email,token,callback) {
 
 
 
-getTodos : function (user,res, timestamp) {
+getTodos : function (user, timestamp,done) {
 	
-	// get and return all the todos after you create another
-	if (timestamp == undefined) timestamp = Date.now();
+	// 
+	
 	var tasklist={};
 	var query = 'MATCH (u:USER)-[:HASTO]-(t:TODO) WHERE (id(u)={userid} AND (NOT has(t.dateRemind) OR (t.dateRemind < {timestamp}))) RETURN t  ORDER BY t.dateDue ASC LIMIT 100 ';
     var query2= 'MATCH (u)-[:MEMBER]-(g)-[:HASTO]-(t:TODO)  WHERE id(u)={userid} return t ORDER BY t.dateDue ASC LIMIT 100'; 
     var queryActions='MATCH (u:USER) WHERE id(u)={userid} WITH u MATCH (u)-[a:ACTION]-(t:TODO)  return t UNION MATCH (u)-[:MEMBER*0..]-(g:GROUP)-[a:ACTION]-(t:TODO)  return t';
 	db.query(query, {userid: user.id, timestamp: timestamp},function(err, todos) {
-		if (err)
-			res.send(err)
-		convertDates(todos);
-		tasklist.me=todos;
-		db.query(query2, {userid: user.id},function(err, todos) {
-			if (err)
-				res.send(err)
+		if (err) {
+			done(err);
+		} else {
 			convertDates(todos);
-			tasklist.group=todos;
-			db.query(queryActions, {userid: user.id},function(err, actions) {
-				if (err)
-					res.send(err)
-				tasklist.actions=actions;
-				res.json(tasklist);
-			    });
-		
+			tasklist.me=todos;
+			db.query(query2, {userid: user.id},function(err, todos) {
+				if (err) {
+					done(err)
+				} else {
+					convertDates(todos);
+					tasklist.group=todos;
+					db.query(queryActions, {userid: user.id},function(err, actions) {
+						if (err) {
+							done(err)
+						} else {
+							tasklist.actions=actions;
+							done(null,tasklist);
+						}
+					});
+				}
+			
 	    });
+		}
 	});
 },
 getActions : function (user,done) {
