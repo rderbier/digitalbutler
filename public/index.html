@@ -29,7 +29,7 @@
 <script src="/js/ui-bootstrap/ui-bootstrap-tpls-2.3.0.min.js"></script>
     <link rel="stylesheet" href="/css/theme.min.css">
    
-    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
 
     <!-- Our Website CSS Styles -->
     <link rel="stylesheet" href="css/main.css">
@@ -48,7 +48,7 @@
 <div ng-include='"templates/header.html"'></div>
 <!--div ng-include='"partials/command.html"' ng-if="userinfo.login==true"></div>
 -->
-<div ng-view></div>
+<div id="content" ng-view></div>
 <div ng-include='"templates/footer.html"'></div>
 
 <!-- Vendor: Javascripts -->

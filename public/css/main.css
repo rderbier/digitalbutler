@@ -12,6 +12,49 @@ For more info and more free Bootstrap 3 HTML themes, visit http://startbootstrap
 
 */
 
+.fa-microphone {
+    color:  #adf7ff;
+}
+/* to get the scrolling of content part  */
+body {
+    overflow: hidden;
+}
+#content {
+    max-height: calc(100% - 20px);
+    overflow-y: scroll;
+    
+    margin-top: 0px;
+}
+/* to get the header font awesome size */
+ .custom-navbar .fa {font-size:25px}
+
+@media (max-width:767px) { 
+    .custom-navbar .navbar-right {
+        float: right;
+        padding-right: 15px;
+    }
+    .custom-navbar .nav.navbar-nav.navbar-right li {
+        float: right;
+    }
+    .custom-navbar .nav.navbar-nav.navbar-right li > a {
+        padding:8px 5px;
+    }
+    .custom-navbar .navbar-toggle {
+        float: left
+    }
+    .custom-navbar .navbar-header {
+        float: left;
+        width: auto!important;
+    }
+    .custom-navbar .navbar-collapse {
+        clear: both;
+        float: none;
+    }
+}
+/*
+Speech
+*/
+
   .speech {border: 1px solid #DDD; width: 300px; padding: 0; margin: 0}
   .speech input {border: 0; width: 240px; display: inline-block; height: 30px;}
   .speech img {float: right; width: 40px }
@@ -210,8 +253,14 @@ body {
 }
 
 /* Footer Styles */
-footer {
-    margin: 50px 0;
+.footer {
+   
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 40px;
+    background-color: #2b2b2b;
+
 }
 
 /* Responsive Styles */

@@ -19,6 +19,7 @@
     "passport-local": "~0.1.6",
     "passport-google-oauth":"latest",
     "seraph": "^0.15.2",
-    "sparkpost": "latest"
+    "sparkpost": "latest",
+    "neo4j-promised-cypher": "latest"
   }
 }

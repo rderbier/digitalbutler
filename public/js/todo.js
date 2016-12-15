@@ -1,12 +1,19 @@
 // todo.js
 var app = angular.module('digitalbutler');
 
-app.controller('todoController',['$scope', '$http', function todoController($scope, $http) {
+app.controller('todoController',['$scope', '$rootScope','$http', function todoController($scope, $rootScope, $http) {
     $scope.newformvisible = false; 
     $scope.newTask = {
       occurrence: "NOW"
     };
     $scope.showResult=false;
+    $rootScope.menu=[];
+    $rootScope.menu.push({label:'new task', fa:'fa-plus-circle', href:'/#/newtask'});
+    $rootScope.menu.push({label:'actions', fa:'fa-cogs', href:'/#/actions'});
+    
+    $rootScope.launchMenu=function(m) {
+
+    }  
     $scope.taskSchema = {
           "type": "object",
           "title": "TODO",
@@ -122,20 +129,21 @@ $scope.getTodos = function() {
           for (var t in data.me) {
                var task = data.me[t];
                
-               if (task.duedate) {
-                  var d=new Date(task.duedate);
-                  task.duedatestr=d.toUTCString().substr(0,11);
-               }
+               if (task.done==true) { 
+                  mydone+=1
+                } else {
+                  mytasks+=1
+                };
+
                $scope.setTaskStrings(task);
                
             }
+            data.mytasks=mytasks;
+            data.mydone=mydone;
           for (var t in data.group) {
                var task = data.group[t];
                
-               if (task.duedate) {
-                  var d=new Date(task.duedate);
-                  task.duedatestr=d.toUTCString().substr(0,11);
-               }
+               
                $scope.setTaskStrings(task);
             }
             $scope.todos = data;
@@ -204,6 +212,18 @@ $scope.updateTask = function(task,form) {
 markTaskAsDone = function(task) {
 
     $http.put('/api/taskdone/'+task.id, task)
+    .success(function(data) {
+        
+        console.log(data);
+        $scope.getTodos();
+    })
+    .error(function(data) {
+        console.log('Error: ' + data);
+    });
+};
+$scope.purgeTasks = function() {
+
+    $http.put('/api/taskpurge')
     .success(function(data) {
         
         console.log(data);

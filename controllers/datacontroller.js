@@ -13,6 +13,22 @@ var db = require("seraph")({
 	pass: url.auth.split(':')[1]
 });
 
+var  convertDates = function(todos) {
+	for (t in todos) {
+			if (todos[t].dateCreated) {
+				var d=new Date(todos[t].dateCreated);
+				todos[t].dateCreatedStr = d.toUTCString().substr(0,11);
+			}
+		    if (todos[t].dateDue) {
+				var d=new Date(todos[t].dateDue);
+				todos[t].dateDueStr = d.toUTCString().substr(0,11);
+			}
+		    if (todos[t].dateRemind) {
+				var d=new Date(todos[t].dateRemind);
+				todos[t].dateRemindStr = d.toUTCString().substr(0,11);
+			}
+		}
+}
 function replyDbCallback(res) {
  var f= function(err, data) {
 		if (err) {
@@ -138,20 +154,23 @@ userByGoogleId: function (googleid,email,token,callback) {
 
 
 
-getTodos : function (user,res) {
+getTodos : function (user,res, timestamp) {
 	
 	// get and return all the todos after you create another
+	if (timestamp == undefined) timestamp = Date.now();
 	var tasklist={};
-	var query = 'MATCH (u:USER)-[:HASTO]-(t:TODO) WHERE id(u)={userid} RETURN t  ORDER BY t.duedate ASC LIMIT 100 ';
-    var query2= 'MATCH (u)-[:MEMBER]-(g)-[:HASTO]-(t:TODO)  WHERE id(u)={userid} return t ORDER BY t.duedate ASC LIMIT 100'; 
+	var query = 'MATCH (u:USER)-[:HASTO]-(t:TODO) WHERE (id(u)={userid} AND (NOT has(t.dateRemind) OR (t.dateRemind < {timestamp}))) RETURN t  ORDER BY t.dateDue ASC LIMIT 100 ';
+    var query2= 'MATCH (u)-[:MEMBER]-(g)-[:HASTO]-(t:TODO)  WHERE id(u)={userid} return t ORDER BY t.dateDue ASC LIMIT 100'; 
     var queryActions='MATCH (u:USER) WHERE id(u)={userid} WITH u MATCH (u)-[a:ACTION]-(t:TODO)  return t UNION MATCH (u)-[:MEMBER*0..]-(g:GROUP)-[a:ACTION]-(t:TODO)  return t';
-	db.query(query, {userid: user.id},function(err, todos) {
+	db.query(query, {userid: user.id, timestamp: timestamp},function(err, todos) {
 		if (err)
 			res.send(err)
+		convertDates(todos);
 		tasklist.me=todos;
 		db.query(query2, {userid: user.id},function(err, todos) {
 			if (err)
 				res.send(err)
+			convertDates(todos);
 			tasklist.group=todos;
 			db.query(queryActions, {userid: user.id},function(err, actions) {
 				if (err)
@@ -163,21 +182,14 @@ getTodos : function (user,res) {
 	    });
 	});
 },
-getTasks : function(req, res) {
-    self.getTodos(req.user,res);
-},
-getActions : function (req,res) {
+getActions : function (user,done) {
 	// find taks related to user by ACTION and by NEXT relations
-    var user = req.user;
+   
 
 	var query = 'MATCH (u:USER)-[a:ACTION]-()-[:NEXT*0..]-(t:TODO) WHERE id(u)={userid} return t';
-	db.query(query, {userid: user.id},replyDbCallback(res));
+	db.query(query, {userid: user.id},done);
 },
 
-createTodo : function(req, res) {
-	self.createTask(req.user,req.body, replyDbCallback(res));
-
-},
 
 createTask : function(user, task, done) {
 	if (task.distribution==undefined) {
@@ -193,35 +205,39 @@ createTask : function(user, task, done) {
     if (task.execGroupChoice=="ANY") {
     	task.execGroupRole="ANY";
     }
-	var set=[];
-      set.push('t.createdon=timestamp()');
-	if (task.description)
-		set.push(' t.description="'+task.description+'"');
 
-	if (task.distribution)
-		set.push(' t.distribution="'+task.distribution+'"');
-	if (task.execGroupId)
-		set.push(' t.execGroupId="'+parseInt(task.execGroupId)+'"');
-	if (task.createdFrom)
-		set.push(' t.createdFrom='+task.createdFrom);
-	if (task.execGroupChoice)
-		set.push(' t.execGroupChoice="'+task.execGroupChoice+'"');
-	if (task.execUser)
-		set.push(' t.execUser="'+task.execUser+'"');
-	if (task.execGroupName)
-		set.push(' t.execGroupName="'+task.execGroupName+'"');
-	if (task.execGroupRole)
-		set.push(' t.execGroupRole="'+task.execGroupRole+'"');
-	if (task.occurrence)
-		set.push(' t.occurrence="'+task.occurrence+'"');
-	if (task.trigOption)
-		set.push(' t.trigOption="'+task.trigOption+'"');
-	if (task.trigGroupRole)
-		set.push(' t.trigGroupRole="'+task.trigGroupRole+'"');
-	if (task.trigGroupId)
-		set.push(' t.trigGroupId='+parseInt(task.trigGroupId));
-	if (task.duedate)
-		set.push(' t.duedate='+task.duedate);
+    // handling repetitive task EVERYDAY 
+    // set dateRemind and dateDueSpec
+    if (task.occurrence=="EVERYDAY") {
+    	if (task.dateRemind==undefined) 
+    		task.dateRemind=Date.now(); // start today
+    	if (task.repeatIndex==undefined)
+    		task.repeatIndex=100; // TODO change for month DAY WEEK.
+    	task.dateDue=task.dateRemind;
+    	task.dateDueSpec=0; // same day so +0 days)
+    	var d = new Date(task.dateRemind);
+    	task.instance = d.toUTCString().substr(0,11); // set the instance name to be the remind date string
+    }
+	var set=[];
+      set.push('t.dateCreated=timestamp()');
+
+    for (let att of ['description','distribution','createdFrom','execGroupChoice','execUser','execGroupName','execGroupRole',
+    	'occurrence','trigOption','trigGroupRole','doneBy']) {
+    	
+    	if ( task[att]!=undefined) {
+    		console.log ("Attribute "+att);
+    		set.push(' t.'+att+'="'+task[att]+'"');
+    	}
+    }
+    for (let att of ['trigGroupId','execGroupId','dateDue','dateRemind','dateDueSpec','repeatIndex','dateDone']) {
+    	
+    	if ( task[att]!=undefined) {
+    		console.log ("Attribute "+att);
+    		set.push(' t.'+att+'='+parseInt(task[att]));
+    	}
+    }
+
+
 	if (task.occurrence == 'CHAINED') {
 		console.log("Chained task ");
 		
@@ -280,56 +296,41 @@ createTask : function(user, task, done) {
     }
 
 },
-startTask : function(req, res) {
-	// create a task based ona task template
-	var task=req.body;
-	task.occurrence="NOW";  // change ATWILL from the template to NOW for this instance
-	task.createdFrom=task.id; // trace the origin of this task
 
-	self.createTask(req.user,task, replyDbCallback(res));
-},
-allocateTaskToUser : function(req, res) {
+allocateTaskToUser : function(user, task, done) {
 
-	var user = req.user;
-	var task=req.body;
+
     var query ='MATCH (u:USER)-[:MEMBER]-(g:GROUP)-[r:HASTO]-(t:TODO) WHERE id(t)={taskid} and id(u)={userid} MERGE (u)-[l:HASTO]->(t) SET l=r WITH r DELETE r ';
 
      console.log("allocateTaskToUser query  : "+query);
 
 
-	db.query(query , {userid: user.id, taskid: parseInt(req.body.id)}, function(err, todo) {
-		if (err) {
-			console.log("error  : "+err.message);
-			res.send(err);
-			console.log("query  : "+query);
-		} else {
-			// MATCH (g:GROUP) , (t:TODO)<-[r]-(u) WHERE id(t)=93 AND id(g)=77 DELETE r WITH t,u,g MERGE (t)<-[r:HASTO]-(g)
-			res.send(todo);
-		}
-
-	});
+	db.query(query , {userid: user.id, taskid: parseInt(task.id)}, done);
 
 
 },
-updateTask : function(user, taskid, task, res, done) {
+updateTask : function(user, taskid, task, done) {
 
 	
 // TODO : security update only element 'related' to current user 
 // still to be difined 
 	var query = 'MATCH (t:TODO) WHERE id(t)='+taskid+'  SET ';
 	var set=[];
-	if (task.title)
-		set.push(' t.title="'+task.title+'"');
-	if (task.description)
-		set.push(' t.description="'+task.description+'"');
-	if (task.comment)
-		set.push(' t.comment="'+task.comment+'"');
-	if (task.target)
-		set.push(' t.target="'+task.target+'"');
-	if (task.done)
-		set.push(' t.done='+task.done);
-	if (task.doneby)
-		set.push(' t.target="'+task.doneby+'"');
+	for (let att of ['description','comment','doneBy']) {
+    	
+    	if ( task[att]!=undefined) {
+    		console.log ("Attribute "+att);
+    		set.push(' t.'+att+'="'+task[att]+'"');
+    	}
+    }
+    for (let att of ['done','dateDue','dateRemind','dateDueSpec','repeatIndex','dateDone']) {
+    	
+    	if ( task[att]!=undefined) {
+    		console.log ("Attribute "+att);
+    		set.push(' t.'+att+'='+task[att]);
+    	}
+    }
+	
 	
 	query+=set.join(" , ");
 	query+=' RETURN t';
@@ -341,27 +342,24 @@ updateTask : function(user, taskid, task, res, done) {
 
 
 },
-updateTodo : function(req, res) {
-	var user = req.user;
-	var task=req.body;
-	self.updateTask(user,parseInt(req.params.todo_id), task, res, replyDbCallback(res))
-},
-setTaskDone : function(req, res) {
-    var user = req.user;
-	var task=req.body;
-	task.done=true;
+
+setTaskDone : function(user, task,done) {
+ 
+	task.done=true; // we may remove done by using dateDone !
+	task.dateDone=Date.now();
+	task.doneBy=user.email;
 	if (task.createdFrom != undefined) {
 		// update task and check if there are some next task from template
-		self.updateTask(user,task.id, task, res, function(err, data) {
+		self.updateTask(user,task.id, task, function(err, data) {
 			if (err) {
 				console.log("error  : "+err.message);
-				res.send(err);
+				done(err);
 				
 			} else {
 				// MATCH (g:GROUP) , (t:TODO)<-[r]-(u) WHERE id(t)=93 AND id(g)=77 DELETE r WITH t,u,g MERGE (t)<-[r:HASTO]-(g)
-				var querynext='MATCH (t1:TODO)-[:NEXT]-(t:TODO) WHERE id(t1)='+task.createdFrom+' return t';
+				var querynext='MATCH (t1:TODO)-[:NEXT]->(t:TODO) WHERE id(t1)='+task.createdFrom+' return t';
 	            db.query(querynext, function (err,ndata) {
-	            	if (err) { res.send(err)}
+	            	if (err) { done(err)}
 	            	else {
 	            		for ( var i in ndata) {
 			            	var ntask=ndata[i];
@@ -370,9 +368,9 @@ setTaskDone : function(req, res) {
 			            	ntask.occurrence="NOW";  // change ATWILL from the template to NOW for this instance
 				            
 
-							self.createTask(req.user,ntask, function (err,newtask) {
+							self.createTask(user,ntask, function (err,newtask) {
 								if (err) {
-
+                                    done(err);
 								} else {
 									// create a NEXT relation to follow the instance 
 									var querycreatenext='MATCH (t1:TODO),(t2:TODO) WHERE id(t1)='+task.id+' AND id(t2)='+newtask.id+' CREATE (t1)-[n:NEXT]->(t2) return t2';
@@ -383,56 +381,85 @@ setTaskDone : function(req, res) {
 	            	}	
 	            });
 	            // return the initial done task
-                res.send(data);
+                done(null,data);
 			}
 
 	    });
 
 	} else {
-		// simply update the task
-		self.updateTask(user, task.id, task, res, replyDbCallback(res))
+		// update the task
+		self.updateTask(user, task.id, task, function(err, data) {
+			if (err) {
+				console.log("error  : "+err.message);
+				done(err);
+				
+			} else {
+				if ( task.occurrence == "EVERYDAY") {
+					// handle repetitive EVERYDAY
+					// create new task for tomoorow by copying and cleaning the task
+					task.done=false;
+					task.doneBy=undefined;
+					task.dateDone-undefined;
+					if (task.repeatIndex>0)
+						task.repeatIndex -=1;
+					if (task.repeatIndex > 0) {
+					  task.dateRemind=Date.now()+(24*3600*1000); // now + a day.
+					  self.createTask(user,task, done);
+					} else {
+						done(null,task);
+					}
+				} else {
+					done(null,data);
+				}
+
+				
+				
+			}
+		});
+
+			
 	}
 	
 },
-
-deleteTodo : function(req, res) {
-	var user = req.user;
-	console.log("deleting node "+req.params.todo_id);
+purgePersonalTasks : function(user, days, done) {
+	// delete tasks older that X days
+	
+	console.log("purging  done tasks "+user.email);
     
-    var query = 'MATCH ()-[r]-(t:TODO) WHERE id(t)='+req.params.todo_id+' delete r,t';
-    db.query(query, 
-    	function(err) {
+    var query = 'MATCH (u:USER)-[r]-(t:TODO) WHERE id(u)='+user.id+' AND t.distribution="PERSO" AND t.done=true AND t.dateDone < timestamp()-'+days*24*3600*1000+' delete r,t';
 
-    		if (err) {
-    			console.log("node NOT deleted "+err);
-    			res.send(err);
+    db.query(query, done);
 
-    		} else {
-    			console.log("node deleted ");
-    			res.send("");
-    		}
-    	});
+
+}, 
+
+deleteTodo : function(user, todo_id,done) {
+	
+	console.log("deleting task  "+todo_id);
+    
+    var query = 'MATCH ()-[r]-(t:TODO) WHERE id(t)='+todo_id+' delete r,t';
+    db.query(query, done);
 
 },   
 
-getAssets : function(req, res) {
-	var user = req.user;
+getAssets : function(user, done) {
+	
 	var query = 'MATCH (o:OBJECT)-[r:ISIN]-(l:LOCATION) return o.name AS object, l.name as location';
 
-	db.query(query, {userid: user.id},replyDbCallback(res));
+	db.query(query, {userid: user.id},done);
 
 
 },
-getGroups : function(req, res) {
-	var user = req.user;
+getGroups : function(user, done) {
+	
 	var query = 'MATCH (u:USER)-[m:MEMBER]-(g:GROUP) WHERE id(u)={userid} return m.role as role,id(g) as id, g.name as name,g.createdby as createdby';
 
-	db.query(query, {userid: user.id},replyDbCallback(res));
+	db.query(query, {userid: user.id},done);
 
 
 },
-getUserInfo : function(req, res) {
-	var user = req.user;
+getUserInfo : function(user, done) {
+	
 	var userinfo={};
 
          userinfo.login=true;
@@ -444,24 +471,23 @@ getUserInfo : function(req, res) {
 
 	db.query(query, {userid: user.id},function(err, result) {
 		if (err)
-			res.send(err)
+			done(err);
 		userinfo.groups=result;
-		res.json(userinfo);
+		done(null,userinfo);
 	});
 
 
 },
-getGroup : function(req, res) {
+getGroup : function(user, groupid, done) {
     // return group information, list of roles and for each role list of members
     // login user has to be a member to be allowed to retrieve group information
-	var user = req.user;
-	var groupid=parseInt(req.params.group_id);
+
 	console.log("get group details for user "+user.id+" group "+groupid)
 	var query = 'MATCH (u:USER)-[:MEMBER]-(g:GROUP) WHERE id(u)={userid} AND id(g)={groupid} WITH g MATCH (u2:USER)-[m:MEMBER]-(g) RETURN g.name as name, m.role as role, m.aka as alias, u2.email as email';
 
 	db.query(query, {userid: user.id, groupid: groupid},function(err, result) {
 		if (err)
-			res.send(err)
+			done(err);
 		// build the group information 
 		var g={ name: "", roles:{}};
 		for (i in result) {
@@ -472,7 +498,7 @@ getGroup : function(req, res) {
 			}
 			g.roles[m.role].members.push({ alias: m.alias, email: m.email});
 		}
-		res.json(g);
+		done(null,g);
 	});
 }
 }

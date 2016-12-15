@@ -2,14 +2,14 @@
 
 var interpreter=require("./interpreter.js");
 var authController=require('../controllers/auth');
-var dataController=require('../controllers/datacontroller');
+var apiController=require('../controllers/apicontroller');
 module.exports = function(app,  passport) {
     // api ---------------------------------------------------------------------
      // get user infor
     app.get('/api/userinfo', function(req, res) {
         var userinfo={login: false};
         if (req.isAuthenticated()) {
-         dataController.getUserInfo(req,res);
+         apiController.getUserInfo(req,res);
         } else {
         res.json(userinfo);
     }
@@ -25,29 +25,31 @@ module.exports = function(app,  passport) {
     });
     // get all todos
     app.route('/api/todos')
-      .get(isApiAuthenticated, dataController.getTasks)
-      .post(isApiAuthenticated,dataController.createTodo);
+      .get(isApiAuthenticated, apiController.getTasks)
+      .post(isApiAuthenticated,apiController.createTodo);
 
      app.route('/api/todo/:todo_id') 
-      .delete(isApiAuthenticated, dataController.deleteTodo)
-      .put(isApiAuthenticated,dataController.updateTodo);
+      .delete(isApiAuthenticated, apiController.deleteTodo)
+      .put(isApiAuthenticated,apiController.updateTodo);
      app.route('/api/taskdone/:todo_id') 
-      .put(isApiAuthenticated,dataController.setTaskDone);
+      .put(isApiAuthenticated,apiController.setTaskDone);
+    app.route('/api/taskpurge') 
+      .put(isApiAuthenticated,apiController.purgePersonalTasksCtrl);
     app.route('/api/allocatetome/:todo_id') 
-      .put(isApiAuthenticated,dataController.allocateTaskToUser);
+      .put(isApiAuthenticated,apiController.allocateTaskToUser);
      
     app.route('/api/action')
-      .post(isApiAuthenticated,dataController.startTask);
+      .post(isApiAuthenticated,apiController.startTask);
     app.route('/api/actions')
-      .get(isApiAuthenticated,dataController.getActions);
+      .get(isApiAuthenticated,apiController.getActions);
      // API assets
      //
-    app.get('/api/assets', isApiAuthenticated,dataController.getAssets);
+    app.get('/api/assets', isApiAuthenticated,apiController.getAssets);
 
     // API groups
-    app.get('/api/groups', isApiAuthenticated,dataController.getGroups);
+    app.get('/api/groups', isApiAuthenticated,apiController.getGroups);
     app.route('/api/group/:group_id')
-      .get(isApiAuthenticated,dataController.getGroup);
+      .get(isApiAuthenticated,apiController.getGroup);
 
     // =====================================
     // LOGIN ===============================

@@ -1,20 +1,14 @@
 
     <div class="container"  >
-      <ul>
       
-      <li>Add <a href="/#/newtask" >new task</a></li>
-      <li><a href="/#/newtask" >Send a task</a></li>
-      <li ng-if="todos.group.length>0" >
-            Pick from <a href="/#/sharedtasks"  shared tasks <span class="badge">{{ todos.group.length }}</span> shared tasks</a></li>
-       <li ng-if="todos.group.length==0" >
-            No shared tasks to pick from</li>
-      </ul>
-   
+         <h2><a href="/#/sharedtasks"> <span class="badge">{{ todos.group.length }}</span> shared tasks</a></h2>
 
          <!-- PERSONAL TASK 
          -->
         <div ng-if="todos.me.length>0" class=" text-left">
-            <h2><span class="badge">{{ todos.me.length }}</span>  in your list</h2>
+            <h2><span class="badge">{{ todos.mytasks }}</span>  in your list,  <span class="badge" ng-click="purgeTasks()" >{{ todos.mydone }}  done </span>  </h2>
+            
+  
             <uib-accordion close-others="true" class="todo-list" >
                <div  uib-accordion-group class="panel-default" ng-class="{taskdone: todo.done}"  ng-repeat="todo in todos.me" title="{{todo.description}}" ng-click="showMyTaskDetails(todo)">
                 <uib-accordion-heading>

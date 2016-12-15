@@ -8,20 +8,27 @@
 
         <!-- FORM  -->
    
+                <div  ng-click="startDictation()" class="text-center">
+                <span class="fa-stack fa-lg">
+                        <i class="fa fa-circle fa-stack-2x"></i>
+                        <i class="fa fa-microphone fa-stack-1x"></i>
+                </span>
                 
+                </div>
                 <form class="form-inline">
                 
                     <p class="context-info">{{context}}</p>
-                    <div class="form-group large-control speech">
+                    <div class="form-group large-control">
                         
                         <!-- BIND THIS VALUE TO fcommand IN ANGULAR -->
                         <input type="text" class="form-control " id="transcript" ng-model="command"  >
-                        <img class="pulse" ng-click="startDictation()" src="/img/microphone.gif" />
+                        
                         
                     </div>
                     <button type="submit" class="btn btn-primary" ng-click="sendCommand(command)">Try</button>
 
                   </form> 
+
 
             
 

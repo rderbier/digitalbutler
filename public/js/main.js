@@ -30,7 +30,8 @@ app.config(['$routeProvider', function ($routeProvider) {
     .when("/contact", {templateUrl: "partials/contact.html", controller: "PageCtrl"})
     // Blog
     .when("/register", {templateUrl: "partials/register.html"})
-    .when("/blog/post", {templateUrl: "partials/blog_item.html", controller: "BlogCtrl"})
+    .when("/help/tasks", {templateUrl: "help/help-tasks.html", controller: "PageCtrl"})
+    .when("/help/about", {templateUrl: "help/help-about.html", controller: "PageCtrl"})
     // else 404
     .otherwise("/404", {templateUrl: "partials/404.html", controller: "PageCtrl"});
 }]);
@@ -58,7 +59,13 @@ app.controller('mainCtrl',  function mainCtrl($rootScope, $scope, $location, $ht
    
   $scope.command="";
 
-  
+  $scope.help = function () {
+    if ( $scope.helpContext ) {
+      $location.path("#/help/$scope.helpContext");
+    } else {
+      $location.path("#/help/about");
+    }
+  }
   $rootScope.alert={msg:""};
   $scope.closeAlert = function () {
     $rootScope.alert={msg:""};

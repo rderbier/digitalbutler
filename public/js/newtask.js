@@ -3,6 +3,9 @@ var app = angular.module('digitalbutler');
 
 app.controller('newtaskController',['$rootScope','$scope', '$http', '$location', function newtaskController($rootScope, $scope, $http, $location) {
     $scope.newformvisible = true;
+    $rootScope.menu=[];
+    $rootScope.menu.push({label:'Personal tasks', fa:'fa-list-ul', href:'/#/todos'});
+   
     if ($rootScope.newTask!=undefined) {
          $scope.newTask = $rootScope.newTask;
          $scope.newTask.occurrence = "NOW";
