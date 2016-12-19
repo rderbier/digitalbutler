@@ -27,6 +27,11 @@ module.exports = function(app,  passport) {
     app.route('/api/todos')
       .get(isApiAuthenticated, apiController.getTasks)
       .post(isApiAuthenticated,apiController.createTodo);
+    
+
+    app.route('/api/subjects/group/:group_id')
+      .post(isApiAuthenticated,apiController.addSubject)
+      .get(isApiAuthenticated, apiController.getSubjects);
 
      app.route('/api/todo/:todo_id') 
       .delete(isApiAuthenticated, apiController.deleteTodo)
@@ -41,13 +46,20 @@ module.exports = function(app,  passport) {
     app.route('/api/action')
       .post(isApiAuthenticated,apiController.startTask);
     app.route('/api/actions')
-      .get(isApiAuthenticated,apiController.getActions);
+      .get(isApiAuthenticated,apiController.getStartableActions);
+    app.route('/api/action/:action_id') 
+      .get(isApiAuthenticated, apiController.getAction)
+
+    app.route('/api/actions/topic/:topic')
+      .get(isApiAuthenticated,apiController.getActionsForTopic);
      // API assets
      //
     app.get('/api/assets', isApiAuthenticated,apiController.getAssets);
 
     // API groups
-    app.get('/api/groups', isApiAuthenticated,apiController.getGroups);
+    app.route('/api/groups')
+        .get( isApiAuthenticated,apiController.getGroups)
+        .post(isApiAuthenticated,apiController.addGroup);
     app.route('/api/group/:group_id')
       .get(isApiAuthenticated,apiController.getGroup);
 

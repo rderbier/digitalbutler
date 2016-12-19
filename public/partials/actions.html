@@ -1,0 +1,49 @@
+
+    <div class="container"  >
+      
+   
+
+        
+      
+
+        <!-- HEADER FOR ACTIONS -->
+        <div ng-if="actions.length>0" class=" text-left">
+            <h2><span class="badge">{{ actions.length }}</span>  tasks you can start</h2>
+
+            <uib-accordion close-others="true" >
+            <div  uib-accordion-group class="panel-default" heading="{{ todo.title }} {{todo.duedatestr}}" ng-repeat="todo in actions" title="{{todo.description}}" ng-click="getActionDetails(todo)">
+            
+                <span >{{todo.explanation}}</span>
+                <ul ng-if="currentActionUseCase">
+                <li ng-repeat="step in currentActionUseCase.main">
+                      {{step.title}} {{step.explanation}}
+                </li>
+                </ul>
+                        <form ng-if="currentAction==todo.id" name="taskFormAction" sf-schema="actionSchema" sf-form="taskActionDetailsForm" sf-model="todo" ng-submit="startAction(todo,taskFormAction)"></form>
+                 
+              
+            </div>
+            </uib-accordion>
+        </div>
+
+
+
+ 
+        <div ng-if="actions.length==0" class=" text-left">
+            <h2>I don't have any action you can start</h2>
+        </div>
+
+        <!-- TODO LIST -->
+
+
+
+            
+
+    
+
+ 
+
+
+
+    </div>
+

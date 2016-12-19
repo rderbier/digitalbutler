@@ -57,13 +57,8 @@ $scope.taskActionDetailsForm =  [
       "key": "instance",
       "title": "Enter a title for this instance of task",
       "type": "text"     
-    },
-    {
-      type: "actions",
-      items: [
-      { type: "submit", title: "Create an instance of this task"}
-      ]
     }
+
     ];
 $scope.taskSelfDetailsForm =  [
     {"key": "description",readonly: true},
@@ -153,6 +148,19 @@ $scope.getTodos = function() {
             console.log('Error: ' + data);
         });
     }
+$scope.getActions = function() {
+
+        $http.get('/api/actions')
+        .success(function(data) {
+          //$scope.todos.clear();
+          
+               $scope.actions = data;
+               
+            })
+        .error(function(data) {
+            console.log('Error: ' + data);
+        });
+    }
 
   // when submitting the add form, send the text to the node API
 $scope.showMyTaskDetails = function(task) {
@@ -165,7 +173,60 @@ $scope.showMyTaskDetails = function(task) {
     $scope.newformvisible = false; 
     $scope.mytaskOpened=false;  
 };
+$scope.getActionDetails=function(action) {
+  // complete the form
+  if ($scope.currentAction!=action.id) {
+    var fieldList = action.field.split(',');
+    for (f in fieldList) {
+      $scope.taskActionDetailsForm.push(
+        {
+        key: "attribute-"+f,
+        title: fieldList[f],
+        type: "text"
+      }
+      );
+    }
+    
+    $scope.taskActionDetailsForm.push(
+        {
+        type: "actions",
+        items: [
+        { type: "submit", title: "Create an instance of this task"}
+        ]
+      }
+    );
+    // build the story from action graph
 
+    $scope.currentActionUseCase={"main":[]};
+
+    $http.get('/api/action/'+action.id)
+      .success(function(data) {
+          
+          console.log(data);
+          // building the use case from the graph representation
+          // we get a list of from-relation-to  segement
+
+          var story=[];
+          if (data.length > 0) {
+            story.push(data[0].from);
+            story.push(data[0].to);
+          }
+          for (i=1; i<data.length; i++) {
+             var title=data[i].from.title;
+             for (j=0;j<story.length;j++) {
+                 if (story[j].title==title) {
+                     story.splice(j+1,0,data[i].to);
+                     break;
+                 }
+             }
+
+          }
+          $scope.currentActionUseCase.main=story;
+          $scope.currentAction=action.id;
+          
+      })
+    }
+}
 // when submitting the add form, send the text to the node API
 $scope.setTaskDone = function(task,form) {
       if (task.done==true) {
@@ -503,6 +564,7 @@ deleteTodo = function(task) {
             $scope.userinfo = data;
             init();
             $scope.getTodos();
+            $scope.getActions();
             
         })
         .error(function(data) {

@@ -20,7 +20,7 @@ app.controller('newtaskController',['$rootScope','$scope', '$http', '$location',
 		
     };
     var getActions = function(topic) {
-    	return ($http.get('/api/actions/'));
+    	return ($http.get('/api/actions/topic/'+topic));
 		
     };
     $scope.taskSchema = {

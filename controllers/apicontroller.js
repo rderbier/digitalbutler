@@ -28,10 +28,22 @@ var self = {
 getTasks : function(req, res) {
     dataController.getTodos(req.user,Date.now(),replyDbCallback(res));
 },
-getActions : function (req,res) {
+getActionsForTopic : function (req,res) {
 	// find taks related to user by ACTION and by NEXT relations
     var user = req.user;
-    dataController.getActions(user,replyDbCallback(res));
+    dataController.getActionsForTopic(user,req.params.topic,replyDbCallback(res));
+
+},
+getStartableActions : function (req,res) {
+	// find taks related to user by ACTION and by NEXT relations
+    var user = req.user;
+    dataController.getStartableActions(user,replyDbCallback(res));
+
+},
+getAction : function (req,res) {
+	// find taks related to user by ACTION and by NEXT relations
+    var user = req.user;
+    dataController.getAction(user,parseInt(req.params.action_id),replyDbCallback(res));
 
 },
 
@@ -93,6 +105,13 @@ getGroups : function(req, res) {
 	
 
 },
+addGroup : function(req, res) {
+	var user = req.user;
+	var group = req.body;
+	dataController.addGroup(user,group,replyDbCallback(res));
+	
+
+},
 getUserInfo : function(req, res) {
 	var user = req.user;
 	dataController.getUserInfo(user,replyDbCallback(res));
@@ -105,7 +124,18 @@ getGroup : function(req, res) {
 	var groupid=parseInt(req.params.group_id);
 	dataController.getGroup(user, groupid, replyDbCallback(res));
 	
-}
+},
+getSubjects : function (req,res) {
+	// find taks related to user by ACTION and by NEXT relations
+    var user = req.user;
+    dataController.getSubjects(user,parseInt(req.params.group_id),replyDbCallback(res));
+
+},
+
+addSubject : function(req, res) {
+	dataController.addSubject(req.user,parseInt(req.params.group_id), req.body, replyDbCallback(res));
+
+},
 }
 
 module.exports = self;

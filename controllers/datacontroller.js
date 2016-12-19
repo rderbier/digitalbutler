@@ -72,10 +72,10 @@ createUser:function (email,password,done) {
             		return (done(null, false));
             	}  else {
             		console.log('!signup user : found user without password ' + email);
+                // TODO : improve security as someone can respond to an invite before the real user !
                 // 
-                // update password
 
-                db.save(user,'password', hashPassword , function(err) {
+                   db.save(user,'password', hashPassword , function(err) {
                 	if (err)
                 		throw err;
                 	 done(null, user);
@@ -86,13 +86,11 @@ createUser:function (email,password,done) {
                 // if there is no user with that email
                 // create the user
                 
-
-                db.save({
-                	'email' : email,
-                	'password': hashPassword
-                },'USER', function(err,newuser) {
+                var query = 'CREATE (u:USER {email:{email}, password:{hashPassword}})-[:MEMBER {role:"member"}]->(g:GROUP {name:"SELF"}) return u';
+                db.query(query, {email: email, hashPassword: hashPassword}, function(err,newuser) {
                 	if (err)
                 		done(err);
+                	else 
                 	 done(null, newuser);
                 });
             }
@@ -101,7 +99,10 @@ createUser:function (email,password,done) {
 },
 
 verifyUser: function (username,password,callback) {
+
+    
 	db.find({'email': username}, 'USER', function(err, users) {
+		console.log("verify user; err:"+err+"  users : "+users);
             // if there are any errors, return the error before anything else
             if (err)
             	 return callback(err);
@@ -127,27 +128,25 @@ userByGoogleId: function (googleid,email,token,callback) {
             if (err)
             	 return callback(err);
 
-            // if no user is found, return the message
+            // if no user is found, store the user information
             if (users.length==0) {
-            	// store the user information
-
-                db.save({
-                	'email' : email,
-                	'token': token,
-                	'googleid': googleid
-                },'USER', function(err,newuser) {
+            	
+                var query = 'CREATE (u:USER {email:{email}, token:{token}, googleid:{googleid}})-[:MEMBER {role:"member"}]->(g:GROUP {name:"SELF"}) return u';
+                db.query(query, {email: email,token: token, googleid: googleid}, function(err,newuser) {
                 	if (err)
-                		callback(err);
-                	return callback(null,newuser);
+                		return callback(err);
+                	else 
+                	 return callback(null,newuser);
                 });
-                 return callback(null, false); // req.flash is the way to set flashdata using connect-flash
-            }
 
-            // if the user is found but the password is wrong
-            // TODO : change to crypted version
+               
+                 
+             }
+
+            // if user found return it
             var user=users[0];
             
-            // all is well, return successful user
+         
             return callback(null, user);
         });
 },
@@ -174,26 +173,54 @@ getTodos : function (user, timestamp,done) {
 				} else {
 					convertDates(todos);
 					tasklist.group=todos;
-					db.query(queryActions, {userid: user.id},function(err, actions) {
-						if (err) {
-							done(err)
-						} else {
-							tasklist.actions=actions;
-							done(null,tasklist);
-						}
-					});
+					done(null,tasklist);
+					
 				}
 			
 	    });
 		}
 	});
 },
-getActions : function (user,done) {
+getActionsForTopic : function (user,topic,done) {
 	// find taks related to user by ACTION and by NEXT relations
    
 
 	var query = 'MATCH (u:USER)-[a:ACTION]-()-[:NEXT*0..]-(t:TODO) WHERE id(u)={userid} return t';
 	db.query(query, {userid: user.id},done);
+},
+getStartableActions : function (user,done) {
+	// find taks related to user by ACTION and by NEXT relations
+     var queryActions='MATCH (u:USER) WHERE id(u)={userid} WITH u MATCH (u)-[a:ACTION]-(t:TODO)  return t UNION MATCH (u)-[:MEMBER*0..]-(g:GROUP)-[a:ACTION]-(t:TODO)  return t';
+     db.query(queryActions, {userid: user.id},done);
+},
+getAction : function (user,actionid,done) {
+	// return the path of an ACTION 
+	// ensure that current user is linked to the action in a way
+   
+    var action={};
+
+	var query = 'MATCH (u)-[*0..]-(t:TODO) WHERE id(u)={userid} AND id(t)={actionid} WITH t MATCH (t)-[n:NEXT*0..]->(t1)-[n1:NEXT]->(t2)  return t1 as from,n1 as then,t2 as to';
+	var query2 = 'MATCH (u)-[*0..]-(t:TODO) WHERE id(u)={userid} AND id(t)={actionid} WITH t MATCH (t)-[n:NEXT*0..]->(t1)  return t1';
+	db.query(query, {userid: user.id,actionid: actionid},function(err, data) {
+		if (err) {
+			done(err);
+		} else {
+			
+			action.path=data;
+			db.query(query2, {userid: user.id,actionid: actionid},function(err, data) {
+				if (err) {
+					done(err)
+				} else {
+					
+					action.steps=data;
+					done(null,action);
+					
+				}
+			
+	    });
+		}
+	});
+	
 },
 
 
@@ -249,7 +276,7 @@ createTask : function(user, task, done) {
 		
 		var query = 'MATCH (u:USER)-[a:ACTION]-()-[:NEXT*0..]-(t1:TODO) WHERE id(u)={userid} AND id(t1)={taskid} WITH t1 ';
 		// it is a CHAINED task so there is an instance.
-		query+='MERGE (t1)-[r:NEXT]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'", instance:"'+task.instance+'", topic:"'+task.topic+'", done: false}) ';
+		query+='MERGE (t1)-[r:NEXT]->(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'", instance:"'+task.instance+'", topic:"'+task.topic+'", done: false}) ';
 		query+='WITH  t SET '+set+ ' RETURN t';
 		console.log("Chaining task : "+task.title);
         console.log("query: "+query);
@@ -318,7 +345,7 @@ allocateTaskToUser : function(user, task, done) {
 updateTask : function(user, taskid, task, done) {
 
 	
-// TODO : security update only element 'related' to current user 
+// TODO : security update only element 'related' to  user 
 // still to be difined 
 	var query = 'MATCH (t:TODO) WHERE id(t)='+taskid+'  SET ';
 	var set=[];
@@ -462,6 +489,38 @@ getGroups : function(user, done) {
 
 	db.query(query, {userid: user.id},done);
 
+},
+addGroup : function(user, group, done) {
+	// add or merge group
+	// user creating a main group must have a role in it
+	// user can create sub-groups
+	// having a role in the sub-group you create is optional
+	// so we have 3 cases : main group, sub-group with role, sub-group without rule
+	if (group.role != undefined) 
+		var role=group.role; 
+		else
+		var role = 'member';
+	if (group.knownAs != undefined) 
+		var knownAs=group.knownAs; 
+		else
+		var knownAs = user.email;
+	if (group.parentGroupId != undefined) {
+		var parentGroupId=parseInt(group.parentGroupId);
+		if (group.role!= undefined) {
+	      var query = 'MATCH (u:USER)-[*0..]-(pg:GROUP) WHERE id(u)={userid} AND id(pg)={groupid} MERGE (pg)-[:CONTAINS]-(g:GROUP {name:{groupName}, createdBy:{createdBy}}) WITH u,pg,g MERGE (u)-[m:MEMBER]-(g) set m.role={role}, m.knownAs={knownAs}, g.rootGroup=pg.rootGroup return id(pg) as parentGroupId, pg.name as parentGroup, id(g) as groupId, g.name as group, u.email as user, m.knownAs as knownAs, m.role as role';
+
+		} else {	
+	    var query = 'MATCH (u:USER)-[*0..]-(pg:GROUP) WHERE id(u)={userid} AND id(pg)={groupid} MERGE (pg)-[:CONTAINS]-(g:GROUP {name:{groupName}, createdBy:{createdBy}})  SET g.rootGroup=pg.rootGroup  return id(pg) as parentGroupId, pg.name as parentGroup, id(g) as groupId, g.name as group';
+        }
+		db.query(query, {userid: user.id, groupName: group.name, createdBy: user.email, groupid: parentGroupId,role: role, knownAs: knownAs},done);
+
+	} else {
+	var query = 'MATCH (u:USER) WHERE id(u)={userid} MERGE (g:GROUP {name:{groupName}, createdBy:{createdBy}}) WITH u,g MERGE (u)-[m:MEMBER]-(g) set m.role={role}, m.knownAs={knownAs}, g.rootGroup=id(g) return u.email as user, m.knownAs as knownAs, m.role as role, g.name as group, id(g) as groupid';
+
+	db.query(query, {userid: user.id, groupName: group.name, createdBy: user.email, role: role, knownAs: knownAs},done);
+
+	}
+
 
 },
 getUserInfo : function(user, done) {
@@ -506,7 +565,19 @@ getGroup : function(user, groupid, done) {
 		}
 		done(null,g);
 	});
-}
+},
+// handle subjects : data concepts that a group can manipulate
+getSubjects : function(user, groupid, done) {
+	var query = 'MATCH (s:SUBJECT)<-[:USE]-(g:GROUP)-[*0..]->(g1:GROUP) where id(g1)={groupid} return s';
+	db.query(query, {userid: user.id, groupid: groupid}, done);
+	},
+addSubject : function (user, groupid, subject, done) {
+	
+
+    var query = 'MATCH (u:USER)-[:MEMBER]-(g:GROUP) WHERE id(u)={userid} AND id(g)={groupid} WITH g MERGE (g)-[:USE]-(s:SUBJECT {name:{subjectName}}) SET s.fields={fields} return s' ;
+     db.query(query, {userid: user.id, groupid: groupid, subjectName: subject.name, fields: subject.fields}, done);   
+}	
+
 }
 
 module.exports = self;

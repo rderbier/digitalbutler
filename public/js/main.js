@@ -19,7 +19,7 @@ app.config(['$routeProvider', function ($routeProvider) {
     .when("/", {templateUrl: "partials/landing.html", controller: "PageCtrl"})
     // Pages
     .when("/todos", {templateUrl: "partials/mytasks.html", controller: "todoController"})
-    .when("/actions", {templateUrl: "partials/todo.html", controller: "todoController"})
+    .when("/actions", {templateUrl: "partials/actions.html", controller: "actionsController"})
     .when("/newtask", {templateUrl: "partials/newtask.html", controller: "newtaskController"})
     .when("/sharedtasks", {templateUrl: "partials/sharedtasks.html", controller: "todoController"})
     .when("/location", {templateUrl: "partials/asset.html", controller: "assetController"})
@@ -67,7 +67,12 @@ app.controller('mainCtrl',  function mainCtrl($rootScope, $scope, $location, $ht
     }
   }
   $rootScope.alert={msg:""};
-  $scope.closeAlert = function () {
+  $rootScope.info = function(msg) {
+    $rootScope.alert.type="info";
+    $rootScope.alert.msg=msg;
+    
+  }
+  $rootScope.closeAlert = function () {
     $rootScope.alert={msg:""};
   }
   $scope.endofrecognition = function(e) {
