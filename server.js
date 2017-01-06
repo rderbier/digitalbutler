@@ -40,6 +40,7 @@
 
     // routes ======================================================================
     app.use("/",express.static(__dirname + '/public'));    
+    app.use("/sandbox",express.static(__dirname + '/sandbox')); 
     app.use("/static",express.static(__dirname + '/static'));               
     // set the static files location /public/img will be /img for users
 

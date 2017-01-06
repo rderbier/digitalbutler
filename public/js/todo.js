@@ -1,7 +1,7 @@
 // todo.js
 var app = angular.module('digitalbutler');
 
-app.controller('todoController',['$scope', '$rootScope','$http', function todoController($scope, $rootScope, $http) {
+app.controller('todoController',['$scope', '$rootScope','$http', '$location', function todoController($scope, $rootScope, $http, $location) {
     $scope.newformvisible = false; 
     $scope.newTask = {
       occurrence: "NOW"
@@ -14,6 +14,9 @@ app.controller('todoController',['$scope', '$rootScope','$http', function todoCo
     $rootScope.launchMenu=function(m) {
 
     }  
+    opentask = function (){
+      $location.path("/opentask/"+$scope.currentTask.id);
+    } 
     $scope.taskSchema = {
           "type": "object",
           "title": "TODO",
@@ -61,13 +64,30 @@ $scope.taskActionDetailsForm =  [
 
     ];
 $scope.taskSelfDetailsForm =  [
-    {"key": "description",readonly: true},
-    "instance",
+    {"key": "description",condition:"todo.description!=null", readonly: true},
+    {key:"instance",condition:"todo.instance!=null",readonly: true},
+    {
+      type: "help",
+      condition: "(todo.done!=true) && (todo.taskform==null)",
+      helpvalue: "Just tell me when done ..."
+    },
     {
       type: "actions",
-      condition: "todo.done!=true",
+      condition: "(todo.done!=true) && (todo.taskform==null)",
       items: [
       { type: "submit", title: "Done" }
+      ]
+    },
+    {
+      type: "help",
+      condition: "(todo.done!=true) && (todo.taskform!=null)",
+      helpvalue: "You have few things to enter to complete this task ..."
+    },
+    {
+      type: "actions",
+      condition: "(todo.done!=true) && (todo.taskform!=null)",
+      items: [
+      { type: "button", title: "Work on it", onClick: opentask }
       ]
     },
     {
@@ -87,8 +107,7 @@ $scope.taskGroupDetailsForm =  [
       ]
     }
     ];
-
-
+ 
 $scope.setTaskStrings = function (task) {
   // create a readable explanation of the task
   var role=" anyone ";
@@ -164,9 +183,27 @@ $scope.getActions = function() {
 
   // when submitting the add form, send the text to the node API
 $scope.showMyTaskDetails = function(task) {
-    $scope.currentMyTask = task;  
+     
     $scope.newformvisible = false; 
-    $scope.mytaskOpened=false;  
+    $scope.mytaskOpened=false;
+    $scope.userdataschema={
+          "type": "object",
+          "title": "TODO",
+          readonly: false, 
+          "properties": {
+              "customername":  {"type": "string"}
+            }
+          };
+
+    //$scope.userdataschema=JSON.parse('{ "type": "object", "title": "data","properties":{"customer_name":  {"type": "string"},"entry_date":  {"type": "string"}}}');  
+    $scope.taskform=["customername",     {
+      type: "actions",
+      items: [
+      { type: "submit",  title: "Hide this task"}
+      ]
+    }];
+    $scope.userdata={"customername": "test"};
+    $scope.currentTask = task; 
 };
   $scope.showGroupTaskDetails = function(task) {
     $scope.currentGroupTask = task;  

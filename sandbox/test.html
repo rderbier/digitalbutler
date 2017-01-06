@@ -8,23 +8,49 @@
 <!--[if gt IE 8]><!-->
 <html class="no-js"> <!--<![endif]-->
 <head>
+<script src="/js/jquery/jquery.min.js"></script>
+ <script src="/js/angular/angular.js"></script>
+<script src="/js/angular/angular-animate.min.js"></script>
 
- 
+<script src="/js/angular/angular-route.min.js"></script>
+
+<script src="/js/angular-sanitize/angular-sanitize.min.js"></script>
+<script src="/js/ui-bootstrap/ui-bootstrap-tpls-2.3.0.min.js"></script>
+    <link rel="stylesheet" href="../css/theme.min.css">
+   <link rel="stylesheet" href="../css/strap.min.css">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- Our Website CSS Styles -->
+    <link rel="stylesheet" href="../css/main.css">
+
+
 </head>
-<body >
-               <form class="form-inline">
+<body ng-app="digitalbutler" ng-controller="mainCtrl" >
+              
                 
                     
                     
                         
                         <!-- BIND THIS VALUE TO fcommand IN ANGULAR -->
-                        <div><input type="text" class="form-control " id="transcript" ></div>
-                        
-                        
-                  
-                    <button type="submit" class="btn btn-primary">Try</button>
+                        <form   name="taskFormNew" sf-schema="taskSchema" sf-form="taskForm" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
 
-                  </form> 
+             <form name="t2" sf-schema="userdataschema" sf-form="taskform" sf-model="userdata" ></form>
+             
+<script src='/js/angular-strap/angular-strap.min.js'></script>
+<script src='/js/angular-strap/angular-strap.tpl.min.js'></script>
+<script src="/js/tv4/tv4.js"></script>
 
+<script src="/js/objectpath/objectpath.js"></script>
+<script src="/js/angular-schema-form/dist/schema-form.js"></script>
+<script src="/js/angular-schema-form-bootstrap/bootstrap-decorator.js"></script>
+<script src="/js/strap-datetimepicker/schema-form-date-time-picker.js"></script>
+<!--
+<script src="/js/pickadate/lib/picker.js"></script>
+<script src="/js/pickadate/lib/picker.date.js"></script>
+
+<script src="/js/angular-schema-form-datepicker/bootstrap-datepicker.min.js"></script>
+-->
+<!-- Our Website Javascripts -->
+<script src="test.js"></script>
 </body>
 </html>

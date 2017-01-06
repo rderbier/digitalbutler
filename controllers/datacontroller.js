@@ -158,7 +158,7 @@ getTodos : function (user, timestamp,done) {
 	// 
 	
 	var tasklist={};
-	var query = 'MATCH (u:USER)-[:HASTO]-(t:TODO) WHERE (id(u)={userid} AND (NOT EXISTS(t.dateRemind) OR (t.dateRemind < {timestamp}))) RETURN t  ORDER BY t.dateDue ASC LIMIT 100 ';
+	var query = 'MATCH (u:USER)-[:HASTO]-(t:TODO)--(g:GOAL) WHERE (id(u)={userid} AND (NOT EXISTS(t.dateRemind) OR (t.dateRemind < {timestamp}))) RETURN id(t) as id, t.title as title, t.done as done, t.description as description, t.instance as instance, t.execGroupRole as execGroupRole, t.execGroupName as execGroupName, t.occurrence as occurrence, t.taskform as taskform  ORDER BY t.dateDue ASC LIMIT 100 ';
     var query2= 'MATCH (u)-[:MEMBER]-(g)-[:HASTO]-(t:TODO)  WHERE id(u)={userid} return t ORDER BY t.dateDue ASC LIMIT 100'; 
     var queryActions='MATCH (u:USER) WHERE id(u)={userid} WITH u MATCH (u)-[a:ACTION]-(t:TODO)  return t UNION MATCH (u)-[:MEMBER*0..]-(g:GROUP)-[a:ACTION]-(t:TODO)  return t';
 	db.query(query, {userid: user.id, timestamp: timestamp},function(err, todos) {
@@ -228,6 +228,13 @@ createTask : function(user, task, done) {
 	if (task.distribution==undefined) {
 		task.distribution="PERSO";
 	} 
+	if (task.userdataschema==undefined) {
+		task.userdataschema="{}";
+	} 
+	// default goal title to task title
+	if (task.goaltitle==undefined) {
+		task.goaltitle=task.title;
+	}
 	
 	if (task.distribution=="PERSO") {
           task.execUser=user.email;
@@ -246,22 +253,27 @@ createTask : function(user, task, done) {
     		task.dateRemind=Date.now(); // start today
     	if (task.repeatIndex==undefined)
     		task.repeatIndex=100; // TODO change for month DAY WEEK.
+    	// assuming the due date is the same day as the remind date
     	task.dateDue=task.dateRemind;
     	task.dateDueSpec=0; // same day so +0 days)
     	var d = new Date(task.dateRemind);
     	task.instance = d.toUTCString().substr(0,11); // set the instance name to be the remind date string
     }
 	var set=[];
-      set.push('t.dateCreated=timestamp()');
-
+	
+    set.push('t.dateCreated=timestamp()');
+    var setgoal=[];
+    set.push('g.title="'+task.goaltitle+'" ');
+     // build the set for  string properties only for the properties we want to store on the node TODO
     for (let att of ['description','distribution','createdFrom','execGroupChoice','execUser','execGroupName','execGroupRole',
-    	'occurrence','trigOption','trigGroupRole','doneBy']) {
+    	'occurrence','repetitionWeek', 'repetitionMonth', 'trigOption','trigGroupRole','doneBy','taskform']) {
     	
     	if ( task[att]!=undefined) {
     		console.log ("Attribute "+att);
-    		set.push(' t.'+att+'="'+task[att]+'"');
+    		set.push(' t.'+att+'=\''+task[att]+'\'');
     	}
     }
+    // build the set for non string properties only for the properties we want to store on the node
     for (let att of ['trigGroupId','execGroupId','dateDue','dateRemind','dateDueSpec','repeatIndex','dateDone']) {
     	
     	if ( task[att]!=undefined) {
@@ -269,6 +281,15 @@ createTask : function(user, task, done) {
     		set.push(' t.'+att+'='+parseInt(task[att]));
     	}
     }
+    // build the set for  string properties for the node GOAL for the properties we want to store on the node
+    for (let att of ['userdataschema']) {
+    	
+    	if ( task[att]!=undefined) {
+    		console.log ("Attribute "+att);
+    		setgoal.push(' g.'+att+'=\''+task[att]+'\'');
+    	}
+    }
+
 
 
 	if (task.occurrence == 'CHAINED') {
@@ -300,16 +321,17 @@ createTask : function(user, task, done) {
 	        if ( grouprole!=undefined) {
 	        	role=grouprole;
 	        }
-	      var query = 'MATCH (g:GROUP) WHERE id(g)='+groupid+' ';
+	        // TO DO : ensure the calling user can act on this group
+
+	      var query = 'MATCH (g1:GROUP) WHERE id(g1)='+groupid+' ';
 	      // properties in the MATCH to insure creation of task with same title but different instance
-		  query+='MERGE (g)-[r:'+relation+' {role:"'+role+'"}]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'"';
+		  query+='MERGE (g1)-[r:'+relation+' {role:"'+role+'"}]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'"';
 		  if (task.instance!=undefined)
 		  	query +=', instance:"'+task.instance+'"';
 		  if (task.topic!=undefined) 
 		  	query+=', topic:"'+task.topic+'"';
-		  query+=', done: false}) ';
-
-		  query+='WITH  t SET '+set+ ' RETURN t';
+		  query+=', done: false})-[c:CONTRIBUTE]-(g:GOAL {title:"'+task.goaltitle+'"}) ';
+		  query+='WITH  t,g SET '+set+' , '+setgoal+ ' RETURN t';
 		
 		} else {
 	      var query = 'MATCH (u:USER) WHERE u.email="'+useremail+'" ';
@@ -318,8 +340,8 @@ createTask : function(user, task, done) {
 		  	query +=', instance:"'+task.instance+'"';
 		  if (task.topic!=undefined) 
 		  	query+=', topic:"'+task.topic+'"';
-		  query+=', done: false}) ';
-		  query+='WITH  t SET '+set+ ' RETURN t';
+		  query+=', done: false})-[c:CONTRIBUTE]-(g:GOAL {title:"'+task.goaltitle+'"}) ';
+		  query+='WITH  t,g SET '+set+' , '+setgoal+ ' RETURN t';
 		
 		}
 		
@@ -347,7 +369,7 @@ updateTask : function(user, taskid, task, done) {
 	
 // TODO : security update only element 'related' to  user 
 // still to be difined 
-	var query = 'MATCH (t:TODO) WHERE id(t)='+taskid+'  SET ';
+	var query = 'MATCH (t:TODO)--(g:GOAL) WHERE id(t)='+taskid+'  SET ';
 	var set=[];
 	for (let att of ['description','comment','doneBy']) {
     	
@@ -366,6 +388,10 @@ updateTask : function(user, taskid, task, done) {
 	
 	
 	query+=set.join(" , ");
+	// update userdata  to the goal
+	if (task.userdata != undefined) {
+		query+= ', g.userdata =\''+task.userdata+'\' ';
+	}
 	query+=' RETURN t';
 	
 	console.log("update task : "+taskid," - "+ task.title);
@@ -381,6 +407,8 @@ setTaskDone : function(user, task,done) {
 	task.done=true; // we may remove done by using dateDone !
 	task.dateDone=Date.now();
 	task.doneBy=user.email;
+	// if the task is created from a task model then we have to update the task
+	// and check if the model has a next task.
 	if (task.createdFrom != undefined) {
 		// update task and check if there are some next task from template
 		self.updateTask(user,task.id, task, function(err, data) {
@@ -471,6 +499,15 @@ deleteTodo : function(user, todo_id,done) {
 	console.log("deleting task  "+todo_id);
     
     var query = 'MATCH ()-[r]-(t:TODO) WHERE id(t)='+todo_id+' delete r,t';
+    db.query(query, done);
+
+}, 
+getTaskDetails : function(user, todo_id,done) {
+	
+	console.log("Retrieving task  "+todo_id);
+    
+    var query = 'MATCH (t:TODO)--(g:GOAL) WHERE id(t)='+todo_id+'  RETURN id(t) as id, t.title as title, t.done as done, t.description as description, t.instance as instance, t.execGroupRole as execGroupRole, t.execGroupName as execGroupName, t.occurrence as occurrence, t.taskform as taskform, g.userdataschema as userdataschema LIMIT 1';
+    console.log("query "+query);
     db.query(query, done);
 
 },   

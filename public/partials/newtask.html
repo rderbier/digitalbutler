@@ -4,9 +4,10 @@
 
         
         <div  id="newTaskForm" >
-        <h3>{{newTask.explanation}}</h3>
-        <div class="well">
         
+        <div class="well">
+        <form ng-if="formphase=='type'" name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormType" sf-model="newTask" ></form>
+        <form ng-if="formphase=='reminder'" name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormReminder" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
         <form ng-if="formphase=='title'" name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormTitle" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
 
 
@@ -23,5 +24,6 @@
           <form ng-if="formphase=='chained'"  name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormChained" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
 
         </div>
+        <h3>{{newTask.explanation}}</h3>
         </div>
      </div>

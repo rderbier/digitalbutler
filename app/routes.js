@@ -34,8 +34,11 @@ module.exports = function(app,  passport) {
       .get(isApiAuthenticated, apiController.getSubjects);
 
      app.route('/api/todo/:todo_id') 
+       .get(isApiAuthenticated, apiController.getTaskDetails)
       .delete(isApiAuthenticated, apiController.deleteTodo)
       .put(isApiAuthenticated,apiController.updateTodo);
+    app.route('/api/todo/comment/:todo_id')
+      .post(isApiAuthenticated,apiController.addSubject)
      app.route('/api/taskdone/:todo_id') 
       .put(isApiAuthenticated,apiController.setTaskDone);
     app.route('/api/taskpurge') 

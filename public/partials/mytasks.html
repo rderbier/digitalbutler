@@ -5,6 +5,7 @@
 
          <!-- PERSONAL TASK 
          -->
+
         <div ng-if="todos.me.length>0" class=" text-left">
             <h2><span class="badge">{{ todos.mytasks }}</span>  in your list,  <span class="badge" ng-click="purgeTasks()" >{{ todos.mydone }}  done </span>  </h2>
             
@@ -12,12 +13,18 @@
             <uib-accordion close-others="true" class="todo-list" >
                <div  uib-accordion-group class="panel-default" ng-class="{taskdone: todo.done}"  ng-repeat="todo in todos.me" title="{{todo.description}}" ng-click="showMyTaskDetails(todo)">
                 <uib-accordion-heading>
-      					<input type="checkbox" ng-checked="todo.done" ng-click="checkTask(todo,$event);" />
+      					<input type="checkbox" ng-if="todo.taskform==null" ng-checked="todo.done" ng-click="checkTask(todo,$event);" />
       				{{todo.header}}
    				 </uib-accordion-heading>
-               <div ng-if="todo.id==currentMyTask.id">
-                    <span ng-if="currentMyTask.distribution=='GROUP'">{{currentMyTask.explanation}}</span>
-                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskSelfDetailsForm" sf-model="currentMyTask" ng-submit="setTaskDone(currentMyTask,taskForm)"></form>
+               <div ng-if="todo.id==currentTask.id">
+                     <div ng-if="todo.open!=true">
+                    <span ng-if="currentTask.distribution=='GROUP'">{{currentTask.explanation}}</span>
+                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskSelfDetailsForm" sf-model="currentMyTask" ng-submit="setTaskDone(currentTask,taskForm)"></form>
+                    </div>
+                    <div ng-if="todo.open==true">
+                    <form name="t2" sf-schema="userdataschema" sf-form="taskform" sf-model="userdata" ></form>
+                    </div>
+                    
                </div>
                </div>
              </uib-accordion> 

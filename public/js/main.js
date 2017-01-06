@@ -7,7 +7,7 @@
  * Main AngularJS Web Application
  */
 var app = angular.module('digitalbutler', [
-  'ngRoute','schemaForm', 'ui.bootstrap'
+  'schemaForm', 'schemaForm-datepicker', 'schemaForm-timepicker', 'schemaForm-datetimepicker','ngRoute','schemaForm', 'ui.bootstrap'
 ]);
 
 /**
@@ -19,6 +19,7 @@ app.config(['$routeProvider', function ($routeProvider) {
     .when("/", {templateUrl: "partials/landing.html", controller: "PageCtrl"})
     // Pages
     .when("/todos", {templateUrl: "partials/mytasks.html", controller: "todoController"})
+    .when("/opentask/:taskid", {templateUrl: "partials/opentask.html", controller: "opentaskController"})
     .when("/actions", {templateUrl: "partials/actions.html", controller: "actionsController"})
     .when("/newtask", {templateUrl: "partials/newtask.html", controller: "newtaskController"})
     .when("/sharedtasks", {templateUrl: "partials/sharedtasks.html", controller: "todoController"})
@@ -117,7 +118,7 @@ app.controller('mainCtrl',  function mainCtrl($rootScope, $scope, $location, $ht
     match=command.match(/(?:[\w,\s]*)have to ([\w,\s]*)/i);
     if(match!=null) {
            getit=true;
-           $rootScope.newTask={ title: match[1].trim()}
+           $rootScope.newTask={ title: match[1].trim(), type: 'reminder'}
 
            
            $location.path("/newtask");

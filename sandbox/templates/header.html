@@ -1,0 +1,68 @@
+
+
+<!-- Menu when not loged in = login form -->
+<nav ng-if="userinfo.login==false" class="navbar navbar-inverse navbar-fixed-top custom-navbar" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+
+    
+            
+            <!-- You'll want to use a responsive image option so this logo looks good on devices - I recommend using something like retina.js (do a quick Google search for it and you'll find it) -->
+            <div class="logo">
+            <a  class="navbar-brand" href="#/" >
+                <img src="/static/butler-logo.png" alt="Digital Butler Service"></a>
+             </div>
+            
+            
+        </div>
+
+        <ul class="nav navbar-nav navbar-right">
+            
+            <li><a href="#/help/about" class="fa fa-question-circle"></a>
+            </li>
+          
+        </ul>
+
+
+        
+    </div>
+    <!-- /.container -->
+</nav>
+<nav ng-if="userinfo.login==true" class="navbar navbar-inverse navbar-fixed-top custom-navbar" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+        <!--
+            <button type="button" class="navbar-toggle" ng-click="isNav2Collapsed = !isNav2Collapsed">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            -->
+            
+  
+            <div class="logo">
+            <a  class="navbar-brand" href="#/" >
+                <img src="/static/butler-logo.png" alt="Digital Butler Service"></a>
+             </div>
+                
+            
+        </div>
+          <!-- Non-collapsing right-side icons -->
+                  <!-- Non-collapsing right-side icons -->
+        <ul class="nav navbar-nav navbar-right">
+            <li ng-repeat="m in menu">
+
+            <a ng-if="m.action!=undefined" href="" class="fa {{m.fa}}" title="{{m.label}}" ng-click="launchMenu(m)" ></a>
+            <a ng-if="m.action==undefined" href="{{m.href}}" class="fa {{m.fa}}" title="{{m.label}} " ></a>
+            </li>
+            
+        </ul>
+          
+
+   
+    </div>
+    <!-- /.container -->
+</nav>
+<div uib-alert ng-if="alert.msg!=''" ng-class="'alert-' + (alert.type || 'warning')" dismiss-on-timeout="2000" close="closeAlert()">{{alert.msg}}</div>
+        

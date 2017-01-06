@@ -91,7 +91,11 @@ deleteTodo : function(req, res) {
     dataController.deleteTodo(user,req.params.todo_id,replyDbCallback(res));
 
 },   
+getTaskDetails : function(req, res) {
+	var user = req.user;
+    dataController.getTaskDetails(user,req.params.todo_id,replyDbCallback(res));
 
+}, 
 getAssets : function(req, res) {
 	var user = req.user;
 	dataController.getAssets(user,replyDbCallback(res));
