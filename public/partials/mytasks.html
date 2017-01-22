@@ -19,7 +19,7 @@
                <div ng-if="todo.id==currentTask.id">
                      <div ng-if="todo.open!=true">
                     <span ng-if="currentTask.distribution=='GROUP'">{{currentTask.explanation}}</span>
-                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskSelfDetailsForm" sf-model="currentMyTask" ng-submit="setTaskDone(currentTask,taskForm)"></form>
+                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskSelfDetailsForm" sf-model="currentTask" ng-submit="setTaskDone(currentTask,taskForm)"></form>
                     </div>
                     <div ng-if="todo.open==true">
                     <form name="t2" sf-schema="userdataschema" sf-form="taskform" sf-model="userdata" ></form>

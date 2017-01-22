@@ -21,6 +21,7 @@ app.config(['$routeProvider', function ($routeProvider) {
     .when("/todos", {templateUrl: "partials/mytasks.html", controller: "todoController"})
     .when("/opentask/:taskid", {templateUrl: "partials/opentask.html", controller: "opentaskController"})
     .when("/actions", {templateUrl: "partials/actions.html", controller: "actionsController"})
+    .when("/startaction/:actionid", {templateUrl: "partials/startaction.html", controller: "startactionController"})
     .when("/newtask", {templateUrl: "partials/newtask.html", controller: "newtaskController"})
     .when("/sharedtasks", {templateUrl: "partials/sharedtasks.html", controller: "todoController"})
     .when("/location", {templateUrl: "partials/asset.html", controller: "assetController"})

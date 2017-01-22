@@ -14,9 +14,11 @@ app.controller('todoController',['$scope', '$rootScope','$http', '$location', fu
     $rootScope.launchMenu=function(m) {
 
     }  
+    
     opentask = function (){
       $location.path("/opentask/"+$scope.currentTask.id);
     } 
+    
     $scope.taskSchema = {
           "type": "object",
           "title": "TODO",
@@ -65,7 +67,7 @@ $scope.taskActionDetailsForm =  [
     ];
 $scope.taskSelfDetailsForm =  [
     {"key": "description",condition:"todo.description!=null", readonly: true},
-    {key:"instance",condition:"todo.instance!=null",readonly: true},
+    {"key":"instance",condition:"todo.instance!=null",readonly: true},
     {
       type: "help",
       condition: "(todo.done!=true) && (todo.taskform==null)",
@@ -210,6 +212,8 @@ $scope.showMyTaskDetails = function(task) {
     $scope.newformvisible = false; 
     $scope.mytaskOpened=false;  
 };
+
+// TODO : don't need the whole detail here, just show the description / message ?
 $scope.getActionDetails=function(action) {
   // complete the form
   if ($scope.currentAction!=action.id) {
@@ -331,18 +335,7 @@ $scope.purgeTasks = function() {
         console.log('Error: ' + data);
     });
 };
-$scope.startAction = function(task,form) {
 
-    $http.post('/api/action', task)
-    .success(function(data) {
-        
-        console.log(data);
-        $scope.getTodos();
-    })
-    .error(function(data) {
-        console.log('Error: ' + data);
-    });
-};
     // when submitting the add form, send the text to the node API
     $scope.addTask = function(task,form) {
       if(task.duedate) {

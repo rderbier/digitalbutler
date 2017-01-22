@@ -190,36 +190,51 @@ getActionsForTopic : function (user,topic,done) {
 },
 getStartableActions : function (user,done) {
 	// find taks related to user by ACTION and by NEXT relations
-     var queryActions='MATCH (u:USER) WHERE id(u)={userid} WITH u MATCH (u)-[a:ACTION]-(t:TODO)  return t UNION MATCH (u)-[:MEMBER*0..]-(g:GROUP)-[a:ACTION]-(t:TODO)  return t';
+     var queryActions='MATCH (u)-[m:MEMBER]-(g1:GROUP)-[a:ACTION]-(g:GOAL) WHERE id(u)={userid}   return g';
      db.query(queryActions, {userid: user.id},done);
 },
-getAction : function (user,actionid,done) {
+getGoal : function (user,goalid,done) {
 	// return the path of an ACTION 
 	// ensure that current user is linked to the action in a way
    
     var action={};
-
-	var query = 'MATCH (u)-[*0..]-(t:TODO) WHERE id(u)={userid} AND id(t)={actionid} WITH t MATCH (t)-[n:NEXT*0..]->(t1)-[n1:NEXT]->(t2)  return t1 as from,n1 as then,t2 as to';
-	var query2 = 'MATCH (u)-[*0..]-(t:TODO) WHERE id(u)={userid} AND id(t)={actionid} WITH t MATCH (t)-[n:NEXT*0..]->(t1)  return t1';
-	db.query(query, {userid: user.id,actionid: actionid},function(err, data) {
+    var querygoal='MATCH (u)-[*1..]->(g:GOAL)-[:START]->(s) WHERE id(u)={userid} AND id(g)={goalid} return g.userdataschema as userdataschema,s.id as id, g.title as title, s.taskform as taskform';
+    var querytask='MATCH (u)-[*1..]->(g:GOAL)-[:NEXT]->(t:TODO) WHERE id(u)={userid} AND id(g)={goalid} return t';
+	var query = 'MATCH (u)-[*1..]->(g:GOAL)-[:NEXT*2..]->(t:TODO) WHERE id(u)={userid} AND id(g)={goalid} WITH t MATCH ()-[r]->(t)  return ( {from: id(startNode(r)), cond: r.cond, to: id(endNode(r))}) ';
+	var query2 = 'MATCH (u)-[*0..]->(g:GOAL)-[:NEXT*1..]->(t:TODO)  WHERE id(u)={userid} AND id(g)={goalid} return id(t) as id, t.title as title';
+	db.query(querygoal, {userid: user.id,goalid: goalid},function(err,data) {
 		if (err) {
-			done(err);
-		} else {
-			
-			action.path=data;
-			db.query(query2, {userid: user.id,actionid: actionid},function(err, data) {
-				if (err) {
-					done(err)
-				} else {
-					
-					action.steps=data;
-					done(null,action);
-					
-				}
-			
-	    });
-		}
-	});
+				done(err);
+			} else {
+				action.start=data[0];
+				db.query(querytask, {userid: user.id,goalid: goalid},function(err, data) {
+					if (err) {
+						done(err);
+					} else {
+						action.task=data[0];
+						db.query(query, {userid: user.id,goalid: goalid},function(err, data) {
+							if (err) {
+								done(err);
+							} else {
+								
+								action.path=data;
+								db.query(query2, {userid: user.id,goalid: goalid},function(err, data) {
+									if (err) {
+										done(err)
+									} else {
+										
+										action.steps=data;
+										done(null,action);
+										
+									}
+								
+						    });
+							}
+						});
+					}
+				});
+			}
+    	});
 	
 },
 
@@ -263,7 +278,8 @@ createTask : function(user, task, done) {
 	
     set.push('t.dateCreated=timestamp()');
     var setgoal=[];
-    set.push('g.title="'+task.goaltitle+'" ');
+    var setstart=[];
+    //set.push('g.title="'+task.goaltitle+'" ');
      // build the set for  string properties only for the properties we want to store on the node TODO
     for (let att of ['description','distribution','createdFrom','execGroupChoice','execUser','execGroupName','execGroupRole',
     	'occurrence','repetitionWeek', 'repetitionMonth', 'trigOption','trigGroupRole','doneBy','taskform']) {
@@ -282,15 +298,25 @@ createTask : function(user, task, done) {
     	}
     }
     // build the set for  string properties for the node GOAL for the properties we want to store on the node
-    for (let att of ['userdataschema']) {
+    // if the task has userdata then transfer to the goal
+    // if the task has userdataschema then transfer to the goal
+    for (let att of ['userdataschema','userdata']) {
     	
     	if ( task[att]!=undefined) {
     		console.log ("Attribute "+att);
     		setgoal.push(' g.'+att+'=\''+task[att]+'\'');
     	}
     }
-
-
+    // build the set for  string properties for the node START for the properties we want to store on the node
+    
+    	
+    	if ( task["trigform"]!=undefined) {
+    		console.log ("Attribute trigform");
+    		setstart.push(' s.taskform=\''+task["trigform"]+'\'');
+    	} else {
+    		setstart.push(' s.taskform=\'{}\'');
+    	}
+    
 
 	if (task.occurrence == 'CHAINED') {
 		console.log("Chained task ");
@@ -309,45 +335,64 @@ createTask : function(user, task, done) {
 		var target = task.distribution;
 		var grouprole = task.execGroupRole
         if ( task.occurrence == 'ATWILL') {
-              relation="ACTION";
+              
               groupid = task.trigGroupId; // using notion of starting a task
               useremail = task.trigUser;
               target = task.trigOption;
               grouprole = task.trigGroupRole
-        } 
-        
-		if ((target=="GROUP") && (groupid!=undefined)) {
-			var role="ANY";
-	        if ( grouprole!=undefined) {
-	        	role=grouprole;
-	        }
-	        // TO DO : ensure the calling user can act on this group
+              if ((target=="GROUP") && (groupid!=undefined)) {
+				var role="ANY";
+		        if ( grouprole!=undefined) {
+		        	role=grouprole;
+		        }
+		        // TO DO : ensure the calling user can act on this group
 
-	      var query = 'MATCH (g1:GROUP) WHERE id(g1)='+groupid+' ';
-	      // properties in the MATCH to insure creation of task with same title but different instance
-		  query+='MERGE (g1)-[r:'+relation+' {role:"'+role+'"}]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'"';
-		  if (task.instance!=undefined)
-		  	query +=', instance:"'+task.instance+'"';
-		  if (task.topic!=undefined) 
-		  	query+=', topic:"'+task.topic+'"';
-		  query+=', done: false})-[c:CONTRIBUTE]-(g:GOAL {title:"'+task.goaltitle+'"}) ';
-		  query+='WITH  t,g SET '+set+' , '+setgoal+ ' RETURN t';
-		
-		} else {
-	      var query = 'MATCH (u:USER) WHERE u.email="'+useremail+'" ';
-		  query+='MERGE (u)-[r:'+relation+']-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'"';
-		  if (task.instance!=undefined)
-		  	query +=', instance:"'+task.instance+'"';
-		  if (task.topic!=undefined) 
-		  	query+=', topic:"'+task.topic+'"';
-		  query+=', done: false})-[c:CONTRIBUTE]-(g:GOAL {title:"'+task.goaltitle+'"}) ';
-		  query+='WITH  t,g SET '+set+' , '+setgoal+ ' RETURN t';
-		
-		}
-		
-		console.log("Creating task : "+task.title);
-        console.log("query: "+query);
-		db.query(query, done);
+		      var query = 'MATCH (g1:GROUP) WHERE id(g1)='+groupid+' ';
+		      // properties in the MATCH to insure creation of task with same title but different instance
+			  query+='MERGE (g1)-[a:ACTION]-(g:GOAL {title:"'+task.goaltitle+'"})-[:START]-(s:TODO) WITH a,g,s MERGE (g)-[n:NEXT]-(t:TODO { title:"'+task.title+'" , done:false }) ';
+			  
+			  query+='WITH  a, s,t,g SET '+set+' , '+setgoal+' , '+setstart+ ', a.role="'+role+'" RETURN t';
+			  
+			
+			} 
+			console.log("Creating Goal Action : "+task.goaltitle);
+	        console.log("query: "+query);
+			db.query(query, done);
+        }  else { // normal task creation
+        
+			if ((target=="GROUP") && (groupid!=undefined)) {
+				var role="ANY";
+		        if ( grouprole!=undefined) {
+		        	role=grouprole;
+		        }
+		        // TO DO : ensure the calling user can act on this group
+
+		      var query = 'MATCH (g1:GROUP) WHERE id(g1)='+groupid+' ';
+		      // properties in the MATCH to insure creation of task with same title but different instance
+			  query+='MERGE (g1)-[r:'+relation+' {role:"'+role+'"}]-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'"';
+			  if (task.instance!=undefined)
+			  	query +=', instance:"'+task.instance+'"';
+			  if (task.topic!=undefined) 
+			  	query+=', topic:"'+task.topic+'"';
+			  query+=', done: false})-[c:CONTRIBUTE]-(g:GOAL {title:"'+task.goaltitle+'"}) ';
+			  query+='WITH  t,g SET '+set+' , '+setgoal+ ' RETURN t';
+			
+			} else {
+		      var query = 'MATCH (u:USER) WHERE u.email="'+useremail+'" ';
+			  query+='MERGE (u)-[r:'+relation+']-(t:TODO {createdby:"'+user.email+'", title:"'+task.title+'"';
+			  if (task.instance!=undefined)
+			  	query +=', instance:"'+task.instance+'"';
+			  if (task.topic!=undefined) 
+			  	query+=', topic:"'+task.topic+'"';
+			  query+=', done: false})-[c:CONTRIBUTE]-(g:GOAL {title:"'+task.goaltitle+'"}) ';
+			  query+='WITH  t,g SET '+set+' , '+setgoal+ ' RETURN t';
+			
+			}
+			
+			console.log("Creating task : "+task.title);
+	        console.log("query: "+query);
+			db.query(query, done);
+		} // end of normal task creation
     }
 
 },
@@ -399,6 +444,18 @@ updateTask : function(user, taskid, task, done) {
 
 	db.query(query, done);
 
+
+},
+startAction : function(user, action, done ) {
+    var task = action.task;
+    // copy goaltitle to task.
+    task.goaltitle=action.title;
+    task.occurrence="NOW";
+    task.userdata=action.userdata;
+    task.userdataschema=action.userdataschema;
+    // link the task to the model
+    task.createdFrom=task.id;
+    self.createTask(user,task,done);
 
 },
 
@@ -506,7 +563,7 @@ getTaskDetails : function(user, todo_id,done) {
 	
 	console.log("Retrieving task  "+todo_id);
     
-    var query = 'MATCH (t:TODO)--(g:GOAL) WHERE id(t)='+todo_id+'  RETURN id(t) as id, t.title as title, t.done as done, t.description as description, t.instance as instance, t.execGroupRole as execGroupRole, t.execGroupName as execGroupName, t.occurrence as occurrence, t.taskform as taskform, g.userdataschema as userdataschema LIMIT 1';
+    var query = 'MATCH (t:TODO)--(g:GOAL) WHERE id(t)='+todo_id+'  RETURN id(t) as id, t.title as title, t.done as done, t.description as description, t.instance as instance, t.execGroupRole as execGroupRole, t.execGroupName as execGroupName, t.occurrence as occurrence, t.taskform as taskform, g.userdataschema as userdataschema, g.userdata as userdata  LIMIT 1';
     console.log("query "+query);
     db.query(query, done);
 

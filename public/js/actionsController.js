@@ -1,7 +1,7 @@
 // todo.js
 var app = angular.module('digitalbutler');
 
-app.controller('actionsController',['$scope', '$rootScope','$http', function actionsController($scope, $rootScope, $http) {
+app.controller('actionsController',['$scope', '$rootScope','$http', '$location', function actionsController($scope, $rootScope, $http, $location) {
 
     $rootScope.menu=[];
     $rootScope.menu.push({label:'new task', fa:'fa-plus-circle', href:'/#/newtask'});
@@ -45,12 +45,14 @@ app.controller('actionsController',['$scope', '$rootScope','$http', function act
 
 
 $scope.taskActionDetailsForm =  [
-    {"key": "description",readonly: true},
+    {"key": "description",condition: "todo.description!=undefined", readonly: true},
+
     {
-      "key": "instance",
-      "title": "Enter a title for this instance of task",
-      "type": "text"     
-    }
+        type: "actions",
+        items: [
+        { type: "submit", title: "Start this chain of actions"}
+        ]
+      }
 
     ];
 
@@ -96,26 +98,8 @@ $scope.getActionDetails=function(action) {
   // complete the form
 
   if ($scope.currentAction!=action.id) {
-  	if ( action.field!=undefined) {
-	    var fieldList = action.field.split(',');
-	    for (f in fieldList) {
-	      $scope.taskActionDetailsForm.push(
-	        {
-	        key: "attribute-"+f,
-	        title: fieldList[f],
-	        type: "text"
-	      }
-	      );
-	    }
-    }
- 	$scope.taskActionDetailsForm.push(
-        {
-        type: "actions",
-        items: [
-        { type: "submit", title: "Create an instance of this task"}
-        ]
-      }
-    );
+
+
     // build the story from action graph
 
     $scope.currentActionUseCase={"main":[]};
@@ -129,14 +113,14 @@ $scope.getActionDetails=function(action) {
 
           var story=[];
           if (data.path.length > 0) {
-            story.push(data[0].from);
-            story.push(data[0].to);
+            story.push(data.path[0].from);
+            story.push(data.path[0].to);
           }
           for (i=1; i<data.path.length; i++) {
-             var title=data[i].from.title;
+             var title=data.path[i].from.title;
              for (j=0;j<story.length;j++) {
                  if (story[j].title==title) {
-                     story.splice(j+1,0,data[i].to);
+                     story.splice(j+1,0,data.path[i].to);
                      break;
                  }
              }
@@ -152,15 +136,9 @@ $scope.getActionDetails=function(action) {
 
 $scope.startAction = function(task,form) {
 
-    $http.post('/api/action', task)
-    .success(function(data) {
-        
-        console.log(data);
-        $rootScope.info("action created");
-    })
-    .error(function(data) {
-        console.log('Error: ' + data);
-    });
+
+    $location.path("/startaction/"+task.id);
+
 };
     
 

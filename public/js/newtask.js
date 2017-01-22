@@ -38,6 +38,7 @@ $scope.taskSchema = {
   "properties": {
       "title":  {"type": "string"},
       "description":  {"type": "string"},
+      "instruction":  {"type": "string"},
       "topic":  {"type": "string"},
       "instance":  {"type": "string"},
       "distribution": {"type": "string", "enum": ["PERSO","GROUP"] },
@@ -52,7 +53,7 @@ $scope.taskSchema = {
       "trigGroupRole": { "type": "string" },
       "trigUser": { "type": "string" },
       "occurrence": { "type": "string",
-      "enum": ["NOW","DATE","EVERYDAY","EVERYWEEK","EVERYMONTH","ATWILL","CHAINED"] },
+      "enum": ["NOW","DATE","EVERYDAY","EVERYWEEK","EVERYMONTH","ATWILLME","ATWILLGROUP","CHAINED"] },
       "repetitionWeek": {"type": "string"},
       "repetitionMonth": {"type": "integer", "minimum": 1,"maximum": 31},
       "chainedFrom": {"type": "number"},
@@ -61,6 +62,7 @@ $scope.taskSchema = {
       "done": { "type": "string" },
       "canupload" : {type: "boolean"},
       "hasStatuses" : {type: "boolean"},
+      "trigDataList" : {type: "string"},
       "endresult" : {
                         "type": "array",
                         "items": {
@@ -80,16 +82,8 @@ $scope.taskSchema = {
                           }
                         }
                   },
-      "entryfields" : {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties" : {
-                            "name": { "type": "string" },
-                            "type": { "type": "string" }
-                          }
-                        }
-                  }
+      "showupdatefields" : {type: "string"},
+      "entryfields" : {type: "string"}
     },
   "required": ["title"]
   };
@@ -222,15 +216,50 @@ var formBack = function () {
       $scope.formphase='title';
     }
   };
+  setFormTopic = function() {
+    var task = $scope.newTask;
+    //
+    // build the userdataschema from trig if needed
+  
+  var fieldStartArray=[]; // fields visible in the start activity (trigger)
+
+
+  if (task.trigDataList != undefined) {
+    task.dataschema={
+        "type": "object",
+        "title": "data",
+        "properties" : {}
+      }
+     var dataList=task.trigDataList.split("\n");
+     for (var d of dataList) {
+        var fname=d; 
+        // any transformation of field name ? 
+        //var fname=d.replace(/ /g,"_");
+        task.dataschema.properties[fname]={"type": "string"};
+        fieldStartArray.push('"'+fname+'"');
+     }
+     task.trigform='['+fieldStartArray.join()+']';
+       // build fields for the schema json string
+  
+   }
+   // build map of available fields from userdataschema
+
+
+
+
+
+    $scope.formphase='topic';
+  }
+
   var formNext = function () { 
    $scope.taskExplanation($scope.newTask);
    if ($scope.formphase=='title') {
 		//$scope.newTask.explanation = "Ok, lets configure the task '"+$scope.newTask.title+"'.";
-        $scope.formphase='topic';
+        setFormTopic();
     } 
     if ($scope.formphase=='atwill') {
     //$scope.newTask.explanation = "Ok, lets configure the task '"+$scope.newTask.title+"'.";
-      $scope.formphase='topic';
+      setFormTopic();
     } 
 };
 
@@ -242,7 +271,14 @@ var updateExplanation = function () {
   $scope.taskExplanation($scope.newTask);
 }
 var whenSelected = function () { 
-	if ( $scope.newTask.occurrence=="ATWILL") {
+   if ($scope.newTask.occurrence=="ATWILLME") {
+    $scope.newTask.trigOption="PERSO";
+   }
+   if ($scope.newTask.occurrence=="ATWILLGROUP") {
+    $scope.newTask.trigOption="GROUP";
+   }
+	if (($scope.newTask.occurrence=="ATWILLGROUP") || ($scope.newTask.occurrence=="ATWILLME")) {
+   
     updateExplanation();
 		$scope.formphase='atwill';
 
@@ -291,39 +327,63 @@ $scope.addTask = function(task,form) {
   if(task.duedate) {
     task.duedateStr=Date.parse(task.duedate);
   }
-  if(task.entryfields && task.entryfields[0].name!=undefined) {
-    var fieldProperty='{';
-    for (var e in  task.entryfields) {
-      // var fname=task.entryfields[e].name.replace(/ /g,"_");
-      var fname=task.entryfields[e].name;
 
-        fieldProperty+= '"'+fname+'":  {"type": "string"},';
+  var fieldFormArray=[];  // fields visible in the task form
+
+  if(task.entryfields !=undefined) {
+    
+    // add fields to the schema if not present 
+    // and build the form fields
+    // start creating task form with the data to display
+    for (var e of  task.showupdatefields.split("\n")) {
+      // var fname=task.entryfields[e].name.replace(/ /g,"_");
+      var fname=e;
+
+        
+        fieldFormArray.push('"'+fname+'"');
       // var i="00"+e;
       //fname="f_"+i.substr(-2,2)+"_"+fname;
       // task[fname]="";
     }
-    fieldProperty+='}';
-    task.userdataschema='{ "type": "object", "title": "data","properties":'+fieldProperty+'}';
-    task.taskform='["*"]';
+    for (var e of  task.entryfields.split("\n")) {
+      // var fname=task.entryfields[e].name.replace(/ /g,"_");
+      var fname=e;
+      
+        // any transformation of field name ? 
+        //var fname=d.replace(/ /g,"_");
+        if (task.dataschema.properties[fname]==undefined) {
+          task.dataschema.properties[fname]={"type": "string"};
+        }
+        
+        fieldFormArray.push('"'+fname+'"');
+      // var i="00"+e;
+      //fname="f_"+i.substr(-2,2)+"_"+fname;
+      // task[fname]="";
+    }
+    
+    // create list of fields to display
+    task.taskform='['+fieldFormArray.join()+']';
     task.entryfields=null;
   }
   
-  if (task.execGroupId!=undefined) {
-   task.execGroupName=groupList[parseInt(task.execGroupId)];
- }
-
- $http.post('/api/todos', task)
- .success(function(data) {
-                $scope.newTask = {occurrence: "NOW"}; // clear the form so our user is ready to enter another              
-                $rootScope.alert.msg="Task has been created.";
-                $rootScope.alert.type="info";
-                $rootScope.newTask=undefined;
-                $location.path("/todos");
-              })
- .error(function(data) {
-  console.log('Error: ' + data);
-  $scope.alert.msg=data.message;
-});
+    if (task.execGroupId!=undefined) {
+     task.execGroupName=groupList[parseInt(task.execGroupId)];
+    }
+   task.userdataschema=JSON.stringify(task.dataschema);
+   task.dataschema=null;
+   if ((task.occurrence=="ATWILLGROUP") || (task.occurrence=="ATWILLME")) {
+    task.occurrence="ATWILL";
+   }
+   $http.post('/api/todos', task).success(function(data) {
+                  $scope.newTask = {occurrence: "NOW"}; // clear the form so our user is ready to enter another              
+                  $rootScope.alert.msg="Task has been created.";
+                  $rootScope.alert.type="info";
+                  $rootScope.newTask=undefined;
+                  $location.path("/todos");
+                }).error(function(data) {
+                  console.log('Error: ' + data);
+                  $scope.alert.msg=data.message;
+                });
 };
 
 var groupMap=  [];
@@ -385,7 +445,8 @@ init = function() {
     {"value": "EVERYDAY", "name": "every day"},
     {"value": "EVERYWEEK", "name": "every week"},
     {"value": "EVERYMONTH", "name": "every month"},
-    {"value": "ATWILL", "name": "when someone is requesting"},
+    {"value": "ATWILLME", "name": "when I will request it"},
+    {"value": "ATWILLGROUP", "name": "when someone will request"},
     {"value": "CHAINED", "name": "when another task is done"},
     ],
     "notitle": false,
@@ -483,6 +544,12 @@ $scope.taskFormTitle = [
           onChange: updateExplanation
         },
         {
+          condition:"((newTask.execGroupUser!=undefined) ||(newTask.execGroupRole!=undefined) || (newTask.execGroupChoice=='ANY'))",
+          key : "instruction",
+          title: "I can pass a message",
+          onChange: updateExplanation
+        },
+        {
           condition:"(newTask.title!=undefined)",
           "title": "When do you want people to work on this task ?",
           "key": "occurrence",
@@ -493,7 +560,8 @@ $scope.taskFormTitle = [
           {"value": "EVERYDAY", "name": "every day"},
           {"value": "EVERYWEEK", "name": "every week"},
           {"value": "EVERYMONTH", "name": "every month"},
-          {"value": "ATWILL", "name": "when someone is requesting"},
+          {"value": "ATWILLME", "name": "when I will request it"},
+          {"value": "ATWILLGROUP", "name": "when someone will request"},
           {"value": "CHAINED", "name": "when another task is done"},
           ],
           "notitle": false,
@@ -547,26 +615,27 @@ $scope.taskFormTitle = [
           { key : "canupload",
             title : "Support document upload ?"},
           {
-            key : "entryfields",
-            title : "Any information to collect ?",
+            key : "showupdatefields",
+            title : "Information to show ?",
+            type: "textarea",
             disableSuccessState : true,
-            items: [
-                    { key: "entryfields[].name", startEmpty: true, disableSuccessState: true, notitle: true },
-                    
-                  ]
-                
-            
           },
           {
-          "key": "hasStatuses",
-          title: "Decisions to end the task ",
-    "type": "radios",
-    "titleMap": [
-    {"value": false, "name": "No decision - task ended being 'done'"},
-    {"value": true, "name": "List of decisions"},
-     ]
-   },
-   {
+            key : "entryfields",
+            title : "Any information to collect ?",
+            type: "textarea",
+            disableSuccessState : true,
+          },
+          {
+            "key": "hasStatuses",
+            title: "Decisions to end the task ",
+            "type": "radios",
+            "titleMap": [
+                {"value": false, "name": "No decision - task ended being 'done'"},
+                {"value": true, "name": "List of decisions"},
+             ]
+          },
+          {    
           "key": "endresult",
           condition: "(newTask.hasStatuses==true)",
           title: "what are the possible outcomes ? ",
@@ -586,102 +655,10 @@ $scope.taskFormTitle = [
 
 ];
 
-$scope.taskFormWhen = [
-{
-  "condition": "(newTask.distribution=='PERSO')",
-  "title": "When do you want to work on this task ?",
-  "key": "occurrence",
-  "type": "select",
-  "titleMap": [
-  {"value": "NOW", "name": "later"},
-  {"value": "DATE", "name": "on date"},
-  {"value": "EVERYDAY", "name": "every day"},
-  {"value": "EVERYWEEK", "name": "every week"},
-  {"value": "EVERYMONTH", "name": "every month"},
-  {"value": "ATWILL", "name": "when someone is requesting"},
-  {"value": "CHAINED", "name": "when another task is done"},
-  ],
-  "notitle": false,
-  onChange: whenSelected
-},
-{
-  "condition": "(newTask.distribution=='GROUP')",
-  "title": "When do you want people to work on this task ?",
-  "key": "occurrence",
-  "type": "select",
-  "titleMap": [
-  {"value": "NOW", "name": "asap"},
-  {"value": "DATE", "name": "on date"},
-  {"value": "EVERYDAY", "name": "every day"},
-  {"value": "EVERYWEEK", "name": "every week"},
-  {"value": "EVERYMONTH", "name": "every month"},
-  {"value": "ATWILL", "name": "when someone is requesting"},
-  {"value": "CHAINED", "name": "when another task is done"},
-  ],
-  "notitle": false,
-  onChange: whenSelected
-},
-{
 
-  "key": "duedate",
-  "condition": "newTask.occurrence=='DATE'"
-},
-{
-
-  "key": "repetitionWeek",
-  "title":"which day of the week ?",
-  "condition": "newTask.occurrence=='EVERYWEEK'",
-  "type": "select",
-  "titleMap": [
-  {"value": "1", "name": "Monday"},
-  {"value": "2", "name": "Tuesday"},
-  {"value": "3", "name": "Wednesday"},
-  {"value": "4", "name": "Thursday"},
-  {"value": "5", "name": "Friday"},
-  {"value": "6", "name": "Saturday"},
-  {"value": "7", "name": "Sunday"},
-  ]
-},
-{
-
-  "key": "repetitionMonth",
-  "title":"which day of the month ?",
-  "condition": "newTask.occurrence=='EVERYMONTH'"
-
-
-},
-{
-  type: "actions",
-  condition:"(newTask.occurrence=='NOW') || (newTask.occurrence=='EVERYDAY') ||(newTask.duedate!=undefined) || (newTask.repetitionWeek!=undefined) || (newTask.repetitionMonth!=undefined)",
-  items: [
-  { type: "button", title: "back", style: "btn-info", onClick: formBack},
-  { type: "submit", title: "Create", style: "btn-info" ,icon: "glyphicon glyphicon-icon-exclamation-sign"},
-
-  ]
-},
-{
-  type: "actions",
-  condition:"!((newTask.occurrence=='NOW') || (newTask.occurrence=='EVERYDAY') ||(newTask.duedate!=undefined) || (newTask.repetitionWeek!=undefined) || (newTask.repetitionMonth!=undefined))",
-  items: [
-  { type: "button", title: "back", style: "btn-info", onClick: formBack},
-
-  ]
-}
-]
 
 $scope.taskFormAtwill = [
-{
 
-  "key": "trigOption",
-  "title": "So who can ask me to do this request ?",
-  "condition": "newTask.occurrence=='ATWILL'",
-  "type": "radios",
-  "titleMap": [
-  {"value": "PERSO", "name": "Myself"},
-  {"value": "GROUP", "name": "Somebody from one of my groups"}
-  ],
-  onChange: updateExplanation
-},
 {
   type: "fieldset",
   "condition": "newTask.trigOption=='GROUP'",
@@ -714,6 +691,17 @@ $scope.taskFormAtwill = [
     "condition": "newTask.trigGroupChoice=='ROLE'",
     onChange: updateExplanation  
   }
+  ]
+},
+{
+  title: "Any information to capture when starting the request ?" ,
+  key: "trigDataList",
+  type: "textarea",
+  condition: "(newTask.trigOption=='PERSO') || (newTask.trigGroupChoice=='ANY') || (newTask.trigGroupRole!=undefined)",
+
+  items: [
+  { type: "button", title: "back", style: "btn-info", onClick: formBack},
+
   ]
 },
 {

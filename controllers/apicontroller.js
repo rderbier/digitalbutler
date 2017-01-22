@@ -40,10 +40,10 @@ getStartableActions : function (req,res) {
     dataController.getStartableActions(user,replyDbCallback(res));
 
 },
-getAction : function (req,res) {
+getGoal : function (req,res) {
 	// find taks related to user by ACTION and by NEXT relations
     var user = req.user;
-    dataController.getAction(user,parseInt(req.params.action_id),replyDbCallback(res));
+    dataController.getGoal(user,parseInt(req.params.action_id),replyDbCallback(res));
 
 },
 
@@ -52,13 +52,13 @@ createTodo : function(req, res) {
 
 },
 
-startTask : function(req, res) {
+startAction : function(req, res) {
 	// create a task based ona task template
 	var task=req.body;
 	task.occurrence="NOW";  // change ATWILL from the template to NOW for this instance
 	task.createdFrom=task.id; // trace the origin of this task
 
-	dataController.createTask(req.user,task, replyDbCallback(res));
+	dataController.startAction(req.user,task, replyDbCallback(res));
 },
 allocateTaskToUser : function(req, res) {
 

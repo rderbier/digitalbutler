@@ -47,11 +47,11 @@ module.exports = function(app,  passport) {
       .put(isApiAuthenticated,apiController.allocateTaskToUser);
      
     app.route('/api/action')
-      .post(isApiAuthenticated,apiController.startTask);
+      .post(isApiAuthenticated,apiController.startAction);
     app.route('/api/actions')
       .get(isApiAuthenticated,apiController.getStartableActions);
     app.route('/api/action/:action_id') 
-      .get(isApiAuthenticated, apiController.getAction)
+      .get(isApiAuthenticated, apiController.getGoal)
 
     app.route('/api/actions/topic/:topic')
       .get(isApiAuthenticated,apiController.getActionsForTopic);
