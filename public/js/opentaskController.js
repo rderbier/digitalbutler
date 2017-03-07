@@ -1,7 +1,7 @@
 // todo.js
 var app = angular.module('digitalbutler');
 
-app.controller('opentaskController',['$scope', '$rootScope','$http', '$location', '$routeParams', function todoController($scope, $rootScope, $http, $location, $routeParams) {
+app.controller('opentaskController',['$scope', '$rootScope','$http', '$location', '$routeParams', function opentaskController($scope, $rootScope, $http, $location, $routeParams) {
   $rootScope.menu=[];
   $rootScope.menu.push({label:'Personal tasks', fa:'fa-list-ul', href:'/#/todos'});
   $scope.taskSchema = {

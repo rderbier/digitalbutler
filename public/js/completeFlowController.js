@@ -1,7 +1,7 @@
 // todo.js
 var app = angular.module('digitalbutler');
 
-app.controller('startactionController',['$scope', '$rootScope','$http', '$location', '$routeParams', function startactionController($scope, $rootScope, $http, $location, $routeParams) {
+app.controller('completeFlowController',['$scope', '$rootScope','$http', '$location', '$routeParams', function ($scope, $rootScope, $http, $location, $routeParams) {
 
 	$rootScope.menu=[];
 	$rootScope.menu.push({label:'Personal tasks', fa:'fa-list-ul', href:'/#/todos'});
@@ -17,33 +17,7 @@ app.controller('startactionController',['$scope', '$rootScope','$http', '$locati
     goBack = function() {
     	$location.path("/actions");
     }
-    launchAction = function() {
-    	var flow ={};
 
-    	
-    	flow.goal=$scope.action.goal;
-    	flow.task=$scope.action.task;
-    	flow.goal.instance=$scope.userdata.instance;
-    	$scope.userdata.instance=undefined;
-    	flow.goal.userdata=JSON.stringify($scope.userdata);
-    	
-    	
-    	
-
-    	$http.post('/api/startflow', flow).success(function(data) {
-
-    		$rootScope.alert.msg="Flow started. Have sent task "+data.title;
-    		$rootScope.alert.type="info";
-
-    		$location.path("/todos");
-    	}).error(function(data) {
-    		console.log('Error: ' + data);
-    		$scope.alert.msg=data.message;
-    	});
-    	// post the action to start the process
-    	// move fixed fields out of the form
-
-    }
     showStartDetails = function(action) {
     	    $scope.action=action;
 	    	var task = action.start;

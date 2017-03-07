@@ -1,0 +1,11 @@
+    <div class="container"  >
+      
+
+      
+         <h2>{{ title }}</h2>
+
+        <div ng-if="message!=undefined"><{{ message }}</div>
+        <div class="well">
+        <form  ng-if="formInvite!=undefined" name="form1" sf-schema="inviteSchema" sf-form="formInvite" sf-model="invite" ng-submit="addInvite(invite,form1)"></form>
+        </div>
+       </div>

@@ -1,7 +1,11 @@
-// todo.js
+
+/* draftflows is used to list all the in-complete flows ( still in draft)
+*  on selection page is displaying some details on the flow
+*  on action 'complete' the completeFlow is used to add steps or modify the flow
+*/
 var app = angular.module('digitalbutler');
 
-app.controller('actionsController',['$scope', '$rootScope','$http', '$location', function actionsController($scope, $rootScope, $http, $location) {
+app.controller('draftflowsController',['$scope', '$rootScope','$http', '$location', function ($scope, $rootScope, $http, $location) {
 
     $rootScope.menu=[];
     $rootScope.menu.push({label:'new task', fa:'fa-plus-circle', href:'/#/newtask'});
@@ -50,7 +54,7 @@ $scope.taskActionDetailsForm =  [
     {
         type: "actions",
         items: [
-        { type: "submit", title: "Start this chain of actions"}
+        { type: "submit", title: "Complete this chain of actions"}
         ]
       }
 
@@ -134,10 +138,10 @@ $scope.getActionDetails=function(action) {
 }
 
 
-$scope.startAction = function(task,form) {
+$scope.completeFlow = function(task,form) {
 
 
-    $location.path("/startaction/"+task.id);
+    $location.path("/completeflow/"+task.id);
 
 };
     

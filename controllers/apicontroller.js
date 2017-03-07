@@ -3,6 +3,7 @@
 
 var bcrypt   = require('bcrypt-nodejs');
 var dataController=require('../controllers/datacontroller');
+var Promise = require('promise');
 //
 // configuration =================
 
@@ -21,6 +22,12 @@ function replyDbCallback(res) {
 
 	};
 	return f;
+}
+
+function reply(res) {
+ return function(data) {
+			res.send(data);
+	}
 }
 
 var self = {
@@ -43,7 +50,7 @@ getStartableActions : function (req,res) {
 getGoal : function (req,res) {
 	// find taks related to user by ACTION and by NEXT relations
     var user = req.user;
-    dataController.getGoal(user,parseInt(req.params.action_id),replyDbCallback(res));
+    dataController.getGoal(user,parseInt(req.params.goal_id),replyDbCallback(res));
 
 },
 
@@ -51,14 +58,18 @@ createTodo : function(req, res) {
 	dataController.createTask(req.user,req.body, replyDbCallback(res));
 
 },
+createFlow : function(req, res) {
+	dataController.createFlow(req.user,req.body, replyDbCallback(res));
 
-startAction : function(req, res) {
+},
+
+startFlow : function(req, res) {
 	// create a task based ona task template
 	var task=req.body;
 	task.occurrence="NOW";  // change ATWILL from the template to NOW for this instance
 	task.createdFrom=task.id; // trace the origin of this task
 
-	dataController.startAction(req.user,task, replyDbCallback(res));
+	dataController.startFlow(req.user,task, replyDbCallback(res));
 },
 allocateTaskToUser : function(req, res) {
 
@@ -105,8 +116,11 @@ getAssets : function(req, res) {
 },
 getGroups : function(req, res) {
 	var user = req.user;
-	dataController.getGroups(user,replyDbCallback(res));
-	
+	dataController.getGroups(user).then(reply(res))
+	.catch(function (e) {
+		console.log("error "+e);
+		res.send(e);
+	})
 
 },
 addGroup : function(req, res) {
@@ -140,6 +154,18 @@ addSubject : function(req, res) {
 	dataController.addSubject(req.user,parseInt(req.params.group_id), req.body, replyDbCallback(res));
 
 },
+addInvite : function(req, res) {
+	dataController.addInvite(req.user, req.body, replyDbCallback(res));
+
+},
+acceptInvite : function(req, res) {
+	dataController.acceptInvite(req.user, req.body, replyDbCallback(res));
+
+},
+addDocumentToGoal : function(req, res) {
+	dataController.addDocumentToGoal(req.user, req.body, req.params.goal_id,  replyDbCallback(res));
+
+}
 }
 
 module.exports = self;

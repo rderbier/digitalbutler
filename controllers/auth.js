@@ -81,8 +81,9 @@ exports.init = function() {
     }));
     // =========================================================================
     // Bais Auth LOGIN =============================================================
-   passport.use('basic', new BasicStrategy(
+   passport.use('basic', new BasicStrategy( 
    function(username, password, callback) {
+    console.log("Basic strategy login verification");
        datacontroller.verifyUser(username,password,callback);
 
 

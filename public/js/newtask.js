@@ -6,10 +6,9 @@ app.controller('newtaskController',['$rootScope','$scope', '$http', '$location',
   $rootScope.menu=[];
   $rootScope.menu.push({label:'Personal tasks', fa:'fa-list-ul', href:'/#/todos'});
   var startRemind = function () { 
-   $scope.formphase='reminder';
-   $scope.newTask.distribution='PERSO';
-
- };  
+       $scope.formphase='reminder';
+       $scope.newTask.distribution='PERSO';
+    };  
  if ($rootScope.newTask!=undefined) {
    $scope.newTask = $rootScope.newTask;
    $scope.newTask.occurrence = "NOW";
@@ -18,12 +17,13 @@ app.controller('newtaskController',['$rootScope','$scope', '$http', '$location',
      occurrence: "NOW"
    };
  }
- if ($scope.newTask.type=="reminder") {
-  startRemind();
-} else { 
- $scope.formphase="type";
-}
 
+  if ($scope.newTask.type=="reminder") {
+    startRemind();
+  } else { 
+      $scope.formphase="type";
+  }
+  
 var getGroupDetails = function(groupid) {
  return ($http.get('/api/group/'+groupid));
 
@@ -39,6 +39,7 @@ $scope.taskSchema = {
       "title":  {"type": "string"},
       "description":  {"type": "string"},
       "instruction":  {"type": "string"},
+      "goaltitle":  {"type": "string"},
       "topic":  {"type": "string"},
       "instance":  {"type": "string"},
       "distribution": {"type": "string", "enum": ["PERSO","GROUP"] },
@@ -267,6 +268,13 @@ var startTask = function () {
  $scope.formphase='title';
  $scope.newTask.distribution='GROUP';
 };
+var startTaskFlow = function () { 
+ $scope.formphase='goal';
+ $scope.newTask.distribution='GROUP';
+};
+var completeTaskFlow = function () { 
+     $location.path("/draftflows/");
+};
 var updateExplanation = function () {
   $scope.taskExplanation($scope.newTask);
 }
@@ -327,6 +335,55 @@ $scope.addTask = function(task,form) {
   if(task.duedate) {
     task.duedateStr=Date.parse(task.duedate);
   }
+ 
+
+  var fieldFormArray=[];  // fields visible in the task form
+
+  
+  
+  if (task.execGroupId!=undefined) {
+     task.execGroupName=groupList[parseInt(task.execGroupId)];
+  }
+   task.userdataschema=JSON.stringify(task.dataschema);
+   task.dataschema=null;
+
+   $http.post('/api/todos', task).success(function(data) {
+                  $scope.newTask = {occurrence: "NOW"}; // clear the form so our user is ready to enter another              
+                  $rootScope.alert.msg="Task has been created.";
+                  $rootScope.alert.type="info";
+                  $rootScope.newTask=undefined;
+                  $location.path("/todos");
+                }).error(function(data) {
+                  console.log('Error: ' + data);
+                  $scope.alert.msg=data.message;
+                });
+};
+
+// when submitting the add form, send the text to the node API
+$scope.createFlow = function(task,form) {
+  
+  // start building the start form and userdata if needed
+  var fieldStartArray=[]; // fields visible in the start activity (trigger)
+
+
+  if (task.trigDataList != undefined) {
+    task.dataschema={
+        "type": "object",
+        "title": "data",
+        "properties" : {}
+      }
+     var dataList=task.trigDataList.split("\n");
+     for (var d of dataList) {
+        var fname=d; 
+        // any transformation of field name ? 
+        //var fname=d.replace(/ /g,"_");
+        task.dataschema.properties[fname]={"type": "string"};
+        fieldStartArray.push('"'+fname+'"');
+     }
+     task.trigform='['+fieldStartArray.join()+']';
+       // build fields for the schema json string
+  
+   }
 
   var fieldFormArray=[];  // fields visible in the task form
 
@@ -371,12 +428,10 @@ $scope.addTask = function(task,form) {
     }
    task.userdataschema=JSON.stringify(task.dataschema);
    task.dataschema=null;
-   if ((task.occurrence=="ATWILLGROUP") || (task.occurrence=="ATWILLME")) {
-    task.occurrence="ATWILL";
-   }
-   $http.post('/api/todos', task).success(function(data) {
+
+   $http.post('/api/flow', task).success(function(data) {
                   $scope.newTask = {occurrence: "NOW"}; // clear the form so our user is ready to enter another              
-                  $rootScope.alert.msg="Task has been created.";
+                  $rootScope.alert.msg="Flow has been created.";
                   $rootScope.alert.type="info";
                   $rootScope.newTask=undefined;
                   $location.path("/todos");
@@ -399,12 +454,192 @@ init = function() {
     groupMap.push({ value: $scope.userinfo.groups[g].id, name: $scope.userinfo.groups[g].name }); 
     groupList[parseInt($scope.userinfo.groups[g].id)]=$scope.userinfo.groups[g].name;
   }
+  $scope.taskFormGoalPart1 = [
+    {
+      key : "goaltitle",
+      title: "What would be the goal for this flow ? "
 
+    },
+    { 
+      key: "trigOption",
+      condition:"(newTask.goaltitle!=undefined) ",
+      type: "radios",
+      title: "Who will be able start this task flow ?",
+        "titleMap": [
+          {"value": "PERSO", "name": "Just myself"},
+          {"value": "GROUP", "name": "Someone from one of my groups"}
+        ],
+    },
+    {
+  type: "fieldset",
+  "condition": "newTask.trigOption=='GROUP'",
+  items: [
+
+  {
+    "key": "trigGroupId",
+    "title": "Specify which group :",
+
+    type: "select",
+    titleMap: groupMap,
+    onChange: updateExplanation
+  },
+  {
+    "title": "Who in the group ?",
+    "key": "trigGroupChoice",
+    "condition": "newTask.trigGroupId!=undefined",
+    "type": "radios",
+    onChange: updateExplanation,
+    "titleMap": [
+    { "value": "ANY","name": "Anyone in the group" },
+    { "value": "ROLE","name": "Anyone with specific role" }
+    ]
+  },
+  {
+    "title": "Which role in the group ?" ,
+    "key": "trigGroupRole",
+    type: "select",
+    titleMap: trigGroupRoleMap,
+    "condition": "newTask.trigGroupChoice=='ROLE'",
+    onChange: updateExplanation  
+  }
+  ]
+},
+{
+  title: "Any information to capture when starting the flow ?" ,
+  key: "trigDataList",
+  type: "textarea",
+  condition: "(newTask.trigOption=='PERSO') || (newTask.trigGroupChoice=='ANY') || (newTask.trigGroupRole!=undefined)",
+
+  items: [
+  { type: "button", title: "back", style: "btn-info", onClick: formBack},
+
+  ]
+},  
+//  first task fields
+ {
+  type: "fieldset",
+  condition: "(newTask.trigOption=='PERSO') || (newTask.trigGroupChoice=='ANY') || (newTask.trigGroupRole!=undefined)",
+
+  items: [
+  {
+    key : "title",
+    title: "Ok, What will be the first task ?"
+
+  },
+  {
+    key : "description",
+    title: "Any details or instruction for this task ..."
+
+  }, {
+      type: "fieldset",
+      condition: "(newTask.title!=undefined)",
+      items: [
+          { key : "canupload",
+            title : "Support document upload ?"},
+          {
+            key : "showupdatefields",
+            title : "Information to show ?",
+            type: "textarea",
+            disableSuccessState : true,
+          },
+          {
+            key : "entryfields",
+            title : "Any information to collect ?",
+            type: "textarea",
+            disableSuccessState : true,
+          },
+          {
+            "key": "hasStatuses",
+            title: "Decisions to end the task ",
+            "type": "radios",
+            "titleMap": [
+                {"value": false, "name": "No decision - task ended being 'done'"},
+                {"value": true, "name": "List of decisions"},
+             ]
+          },
+          {    
+          "key": "endresult",
+          condition: "(newTask.hasStatuses==true)",
+          title: "what are the possible outcomes ? ",
+          items: [
+                    { key: "endresult[].label", startEmpty: true, disableSuccessState: true, notitle: true },
+                    
+                  ]
+          }
+          ]
+        },
+   {  // distribution part of first task
+      type: "fieldset",
+      condition: "(newTask.title!=undefined)",
+      items: [
+
+        { type : "help", helpvalue: "<h3>Who shoud i ask to do the first task ? </h3>" },
+        {
+          "condition": "newTask.distribution=='GROUP'",
+          "key": "execGroupId",
+          "title": "Specify which group :",     
+          type: "select",
+          titleMap: groupMap,
+          onChange: formExecGroupSelected
+        },
+          {
+          "title": "Who in the group ?",
+          "key": "execGroupChoice",
+          "condition": "newTask.execGroupId!=undefined",
+          "type": "radios",
+          "titleMap": [
+          { "value": "ANY","name": "Anyone in the group" },
+          { "value": "ROLE","name": "Anyone with specific role" },
+          { "value": "NAMED","name": "specific member" },
+          ],
+          onChange: updateExplanation
+        },
+        {
+          "title": "Which role in the group ?" ,
+          "key": "execGroupRole",
+          "condition": "newTask.execGroupChoice=='ROLE'",
+          type: "select",
+          titleMap: execGroupRoleMap
+        },
+        {
+          "title": "Who from the group ?",
+          "key": "execGroupUser",
+          "condition": "newTask.execGroupChoice=='NAMED'",
+          type: "select",
+          titleMap: execGroupUserMap  
+        }
+        ]
+      },
+  ]
+},
+
+{
+  type: "actions",
+  condition:"((newTask.execGroupUser!=undefined) ||(newTask.execGroupRole!=undefined) || (newTask.execGroupChoice=='ANY'))",
+  items: [
+  { type: "button", title: "Cancel", style: "btn-info", onClick: clearForm},
+  { type: "submit", title: "Confirm", style: "btn-info"}
+
+  ]
+},
+{
+  type: "actions",
+  condition:"!((newTask.execGroupUser!=undefined) ||(newTask.execGroupRole!=undefined) || (newTask.execGroupChoice=='ANY'))",
+  items: [
+  { type: "button", title: "Cancel", style: "btn-info", onClick: clearForm}
+
+  ]
+},
+    
+  ];
 
   $scope.taskFormType = [
             { type : "help", helpvalue: "<h2>What do you want me to do ?</h2>" },
             { type: "button", title: "Remind me to do something ", style: "btn-info", onClick: startRemind},
-            { type: "button", title: "Ask someone to do something ", style: "btn-info", onClick: startTask}
+            { type: "button", title: "Ask someone to do something ", style: "btn-info", onClick: startTask},
+            { type: "button", title: "Learn a flow of task to be started later ", style: "btn-info", onClick: startTaskFlow},
+            { type: "button", title: "Add a task to existing flow ", style: "btn-info", onClick: completeTaskFlow},
+  
         ];
 
   $scope.taskFormReminder = [
@@ -643,7 +878,7 @@ $scope.taskFormTitle = [
                     { key: "endresult[].label", startEmpty: true, disableSuccessState: true, notitle: true },
                     
                   ]
-   },
+          },
   {
     type: "actions",
     items: [ 

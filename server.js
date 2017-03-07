@@ -11,7 +11,7 @@
     var cookieParser = require('cookie-parser');
     var flash    = require('connect-flash');
     var session      = require('express-session');
-    
+   
 
     app.use(morgan('dev'));  
     app.use(cookieParser()); // read cookies (needed for auth)                                       // log every request to the console

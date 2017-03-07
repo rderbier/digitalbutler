@@ -23,6 +23,8 @@
 
           <form ng-if="formphase=='chained'"  name="taskFormNew" sf-schema="taskSchema" sf-form="taskFormChained" sf-model="newTask" ng-submit="addTask(newTask,taskFormNew)"></form>
 
+          <form ng-if="formphase=='goal'"  name="taskFormGoal" sf-schema="taskSchema" sf-form="taskFormGoalPart1" sf-model="newTask" ng-submit="createFlow(newTask,taskFormNew)"></form>
+
         </div>
         <h3>{{newTask.explanation}}</h3>
         </div>

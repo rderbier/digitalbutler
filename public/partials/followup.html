@@ -1,0 +1,51 @@
+
+    <!-- followup page
+          displays list of task asked to someone else and flows started bu this user.
+    -->
+    <div class="container"  >
+      
+         
+
+        <div ng-if="requestedTasks.length>0" class=" text-left">
+            <h2><span class="badge">{{ requestedTasks.length }}</span>  tasks you have requestd, not yet completed </h2>
+            
+  
+            <uib-accordion close-others="true" class="todo-list" >
+               <div  uib-accordion-group class="panel-default"  ng-repeat="todo in requestedTasks" title="{{todo.description}}" ng-click="showMyTaskDetails(todo)">
+                <uib-accordion-heading>
+      					<input type="checkbox" ng-if="todo.taskform==null" ng-checked="todo.done" ng-click="unfollow(todo,$event);" />
+      				{{todo.header}}
+   				 </uib-accordion-heading>
+               <div ng-if="todo.id==currentTask.id">
+                     <div ng-if="todo.open!=true">
+                    <span ng-if="currentTask.distribution=='GROUP'">{{currentTask.explanation}}</span>
+                    <form name="taskForm" sf-schema="taskSchema" sf-form="taskSelfDetailsForm" sf-model="currentTask" ng-submit="setTaskDone(currentTask,taskForm)"></form>
+                    </div>
+                    <div ng-if="todo.open==true">
+                    <form name="t2" sf-schema="userdataschema" sf-form="taskform" sf-model="userdata" ></form>
+                    </div>
+                    
+               </div>
+               </div>
+             </uib-accordion> 
+        
+             
+        </div>
+        <div ng-if="requestedTasks.length==0" class=" text-left">
+            <h2>I don't have any task to follow </h2>
+        </div>
+
+        <!-- TODO LIST -->
+
+
+
+            
+
+
+
+ 
+
+
+
+    </div>
+

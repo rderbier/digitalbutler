@@ -8,26 +8,47 @@
         </div>
 
         <div ng-if="grouplist.length>0" class=" text-left">
-            <h2><span class="badge">{{ grouplist.length }}</span>  groups you are involved in.</h2>
+            <h2><span class="badge">{{ grouplist.length - 1}}</span>  groups you are involved in.</h2>
             <uib-accordion close-others="true" >
                <!-- add the group creator if nedded
                 <span ng-if="group.createdby != userinfo.email">(created by {{group.createdby}})</span>" 
                 -->
 
-               <div  uib-accordion-group class="panel-default"  heading="{{group.role}} of group {{group.name}} " ng-repeat="group in grouplist" title="Group {{group.name}}" ng-click="getGroupDetails(group.id)">
-               <div ng-if="currentgroup==group.id">
-                     <div ng-repeat="(rolename,role) in groupdetailslist[group.id].roles">
-                        <h3>{{rolename}}</h3>
-                         <div ng-repeat="m in role.members">
-                        <span ng-if="m.alias!=undefined"> {{m.alias}} ( {{m.email}} )</span>
-                        <span ng-if="m.alias==undefined"> {{m.email}} </span>
-                         
-                     </div>
-                     </div>
+               <div  uib-accordion-group class="panel-default"  ng-repeat="group in grouplist" ng-if="group.name!='SELF'" title="Group {{group.name}}" ng-click="getGroupDetails(group.id)">
+                 <uib-accordion-heading>
+                       
+                    You are {{group.role}} of group {{group.name}} 
+                    <span ng-if="group.othermemberscount==0"> - no other member </span>
+                    <span ng-if="group.othermemberscount==1"> - one other member </span>
+                    <span ng-if="group.othermemberscount>1"> - {{group.othermemberscount}} other members </span>
+                 </uib-accordion-heading>
+                   <div ng-if="currentgroup==group.id">
+                         <div ng-repeat="(rolename,role) in groupdetailslist[group.id].roles">
+                            <h3>{{rolename}}</h3>
+                             <div ng-repeat="m in role.members">
+                            <span ng-if="m.alias!=undefined"> {{m.alias}} ( {{m.email}} )</span>
+                            <span ng-if="m.alias==undefined"> {{m.email}} </span>
+                             
+                         </div>
+                         </div>
+                   </div>
+               </div>
+
+               <div  uib-accordion-group class="panel-default" title="Group {{group.name}}" ng-click="toggleAddGroupForm()">
+                 <uib-accordion-heading>
+                       
+                    Create a new group 
+                    
+                 </uib-accordion-heading>
+                   <div ng-if="addGroupFormVisible">
+                     <form   name="form1" sf-schema="groupSchema" sf-form="addGroupForm" sf-model="group" ng-submit="addGroup(group,form1)"></form>
+                   </div>
                </div>
              </uib-accordion> 
         
-             
+                               <div ng-if="addGroupFormVisible">
+                     <form   name="form1" sf-schema="groupSchema" sf-form="addGroupForm" sf-model="group" ng-submit="addGroup(group,form1)"></form>
+                   </div>
         </div>
  
 

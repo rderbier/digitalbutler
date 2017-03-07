@@ -6,14 +6,9 @@ var apiController=require('../controllers/apicontroller');
 module.exports = function(app,  passport) {
     // api ---------------------------------------------------------------------
      // get user infor
-    app.get('/api/userinfo', function(req, res) {
-        var userinfo={login: false};
-        if (req.isAuthenticated()) {
-         apiController.getUserInfo(req,res);
-        } else {
-        res.json(userinfo);
-    }
-    });    
+    app.all('/api/*',isApiAuthenticated); 
+    app.route('/api/userinfo')
+        .get(apiController.getUserInfo)
 // command
     app.get('/command', isApiAuthenticated,function(req, res) {
         var user = req.user;
@@ -25,46 +20,54 @@ module.exports = function(app,  passport) {
     });
     // get all todos
     app.route('/api/todos')
-      .get(isApiAuthenticated, apiController.getTasks)
-      .post(isApiAuthenticated,apiController.createTodo);
+      .get( apiController.getTasks)
+      .post(apiController.createTodo);
     
 
     app.route('/api/subjects/group/:group_id')
-      .post(isApiAuthenticated,apiController.addSubject)
-      .get(isApiAuthenticated, apiController.getSubjects);
+      .post( apiController.addSubject)
+      .get( apiController.getSubjects);
 
      app.route('/api/todo/:todo_id') 
-       .get(isApiAuthenticated, apiController.getTaskDetails)
-      .delete(isApiAuthenticated, apiController.deleteTodo)
-      .put(isApiAuthenticated,apiController.updateTodo);
+       .get( apiController.getTaskDetails)
+      .delete( apiController.deleteTodo)
+      .put(apiController.updateTodo);
     app.route('/api/todo/comment/:todo_id')
-      .post(isApiAuthenticated,apiController.addSubject)
+      .post(apiController.addSubject)
      app.route('/api/taskdone/:todo_id') 
-      .put(isApiAuthenticated,apiController.setTaskDone);
+      .put(apiController.setTaskDone);
     app.route('/api/taskpurge') 
-      .put(isApiAuthenticated,apiController.purgePersonalTasksCtrl);
+      .put(apiController.purgePersonalTasksCtrl);
     app.route('/api/allocatetome/:todo_id') 
-      .put(isApiAuthenticated,apiController.allocateTaskToUser);
-     
-    app.route('/api/action')
-      .post(isApiAuthenticated,apiController.startAction);
-    app.route('/api/actions')
-      .get(isApiAuthenticated,apiController.getStartableActions);
-    app.route('/api/action/:action_id') 
-      .get(isApiAuthenticated, apiController.getGoal)
+      .put(apiController.allocateTaskToUser);
+    // goal and flow
+    app.route('/api/flow')
+      .post(apiController.createFlow);
+    app.route('/api/startflow')
+      .post(apiController.startFlow);
+    app.route('/api/flows')
+      .get(apiController.getStartableActions);
+    app.route('/api/flow/:goal_id') 
+      .get( apiController.getGoal)
+    app.route('/api/goal/:goal_id/document') 
+      .post( apiController.addDocumentToGoal)
 
     app.route('/api/actions/topic/:topic')
-      .get(isApiAuthenticated,apiController.getActionsForTopic);
+      .get(apiController.getActionsForTopic);
      // API assets
      //
-    app.get('/api/assets', isApiAuthenticated,apiController.getAssets);
+    app.get('/api/assets',apiController.getAssets);
 
     // API groups
     app.route('/api/groups')
-        .get( isApiAuthenticated,apiController.getGroups)
-        .post(isApiAuthenticated,apiController.addGroup);
+        .get( apiController.getGroups)
+        .post(apiController.addGroup);
     app.route('/api/group/:group_id')
-      .get(isApiAuthenticated,apiController.getGroup);
+      .get(apiController.getGroup);
+    app.route('/api/invite/')
+      .post(apiController.addInvite);
+    app.route('/api/invite/accept')
+      .post(apiController.acceptInvite);
 
     // =====================================
     // LOGIN ===============================
@@ -129,22 +132,40 @@ module.exports = function(app,  passport) {
     // LOGOUT ==============================
     // =====================================
     app.get('/logout', function(req, res) {
-    	req.logout();
-    	res.redirect('/');
+    	  req.logout();
+          req.session.destroy(function (err) {
+            if (err) { return next(err); }
+            // The response should indicate that the user is no longer authenticated.
+            return res.send({ authenticated: req.isAuthenticated() });
+          
+            //res.redirect('/'); //Inside a callback… bulletproof!
+          });
+    	
     });
-};
+}
+
 
 
 
 // route middleware to make sure a user is logged in
 
 function isApiAuthenticated(req, res, next) {
-    console.log("Testing isLoggedIn "+req.isAuthenticated());
+    //var basic=authController.isAuthenticated(req,res,next);
+
+    //console.log("Testing basic "+basic);
+    for (k in req.headers) {
+       console.log("Testing Headers "+k+" = "+req.headers[k]);
+    }
+    if (req.headers["authorization"]) {
+        return (authController.isAuthenticated(req,res,next));
+    }
     // if user is authenticated in the session, carry on 
-    if (req.isAuthenticated())
-        return next();
-    return (authController.isAuthenticated(req,res,next));
-  
+    if (req.isAuthenticated()) {
+        next();
+    } else {
+        next("error");
+    }
+    
 }
 function isLoggedIn(req, res, next) {
 	console.log("Testing isLoggedIn "+req.isAuthenticated());

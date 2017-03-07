@@ -23,7 +23,7 @@ module.exports = function (user,command, req,res) {
             console.log("is in match "+asset+" "+location);
                        
                      var query = [
-                    'MATCH (o:OBJECT {createdby:{createdby},name:{asset}})-[r:ISIN]-() DELETE r WITH count(*) as C merge (o:OBJECT {createdby:{createdby},name:{asset}})-[r2:ISIN]-(l2:LOCATION {createdby:{createdby},name:{location}}) return o,r2,l2'
+                    'MATCH (o:OBJECT {createdby:{createdby},name:{asset}})-[r:ISIN]-() DELETE r WITH count(*) as C merge (o2:OBJECT {createdby:{createdby},name:{asset}}) MERGE (l2:LOCATION {createdby:{createdby},name:{location}})  MERGE (o2)-[r2:ISIN]-(l2) return o2,r2,l2'
          ].join('\n');
              response.page="location";
              response.message="Where is "+asset;

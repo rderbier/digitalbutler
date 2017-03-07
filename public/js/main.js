@@ -21,6 +21,8 @@ app.config(['$routeProvider', function ($routeProvider) {
     .when("/todos", {templateUrl: "partials/mytasks.html", controller: "todoController"})
     .when("/opentask/:taskid", {templateUrl: "partials/opentask.html", controller: "opentaskController"})
     .when("/actions", {templateUrl: "partials/actions.html", controller: "actionsController"})
+    .when("/draftflows", {templateUrl: "partials/draftflows.html", controller: "draftflowsController"})
+    .when("/completeflow/:actionid", {templateUrl: "partials/completeFlow.html", controller: "completeFlowController"})    
     .when("/startaction/:actionid", {templateUrl: "partials/startaction.html", controller: "startactionController"})
     .when("/newtask", {templateUrl: "partials/newtask.html", controller: "newtaskController"})
     .when("/sharedtasks", {templateUrl: "partials/sharedtasks.html", controller: "todoController"})
@@ -34,6 +36,8 @@ app.config(['$routeProvider', function ($routeProvider) {
     .when("/register", {templateUrl: "partials/register.html"})
     .when("/help/tasks", {templateUrl: "help/help-tasks.html", controller: "PageCtrl"})
     .when("/help/about", {templateUrl: "help/help-about.html", controller: "PageCtrl"})
+    .when("/invite", {templateUrl: "partials/invite.html", controller: "inviteController"})
+    .when("/followup", {templateUrl: "partials/followup.html", controller: "followupController"})
     // else 404
     .otherwise("/404", {templateUrl: "partials/404.html", controller: "PageCtrl"});
 }]);
@@ -111,6 +115,7 @@ app.controller('mainCtrl',  function mainCtrl($rootScope, $scope, $location, $ht
   
     var getit=false;;
     var match;
+    command=command.toUpperCase();
     match=command.match(/(?:[\w,\s]*)new task/i);
         if(match!=null) {
            getit=true;
@@ -124,6 +129,17 @@ app.controller('mainCtrl',  function mainCtrl($rootScope, $scope, $location, $ht
            
            $location.path("/newtask");
         }
+    /*
+    * invite
+    */
+    match=command.match(/(?:[\w,\s]*)(invite)(\s[\w]*)(?:(?: to (?:(?:join )*)(?:(?:group )*)*)*)([\w,\s]*)/i);
+    if(match!=null) {
+           getit=true;
+           $rootScope.invite={ alias: match[2].trim(), groupname: match[3].trim()}
+
+           
+           $location.path("/invite");
+        } 
 
     if (getit==false) {
             

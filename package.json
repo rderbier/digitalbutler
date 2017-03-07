@@ -5,6 +5,7 @@
   "main": "server.js",
   "author": "rdr",
   "dependencies": {
+    "promise": "latest",
     "bcrypt-nodejs": "latest",
     "body-parser": "^1.4.3",
     "connect-flash": "~0.1.1",
